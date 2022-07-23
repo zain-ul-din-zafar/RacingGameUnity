@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.Serialization;
@@ -24,7 +25,14 @@ public class PlayerController : MonoBehaviour {
     
     private float vVelocity;
     private void Awake() {  characterController = GetComponent<CharacterController>(); }
-    
+
+    private IEnumerator Start() {
+        while (true) {
+            yield return new WaitForSeconds(5f);
+            speed += Time.deltaTime;
+        }
+    }
+
     private void Update() {
 
         slideTime -= Time.deltaTime;
