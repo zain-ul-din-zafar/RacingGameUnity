@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
@@ -9,9 +10,9 @@ public class PlayerController : MonoBehaviour {
     private CharacterController characterController;
     [SerializeField] private float speed = 6.0f;
     [SerializeField] private Camera _camera;
-    [SerializeField] private List<Vector3> List;
+    [SerializeField] private List<Vector3> lines;
     [SerializeField] private float cameraOffSet = 3f;
-    private int currentIdx = 1;
+    [SerializeField] private int currentIdx = 1;
     [SerializeField] private float lerpDuration = 0.5f;
 
     [SerializeField] private Animator _animator;
@@ -22,9 +23,14 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float jumpTime = 0.5f;
    
     [SerializeField] private Transform meshTransform;
+    [SerializeField] private bool isJumping;
     
     private float vVelocity;
-    private void Awake() {  characterController = GetComponent<CharacterController>(); }
+
+    private void Awake() {
+        characterController = GetComponent<CharacterController>();
+        transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
+    }
 
     private IEnumerator Start() {
         while (true) {
@@ -34,24 +40,30 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Update() {
-
+        
         slideTime -= Time.deltaTime;
         
         if (slideTime > 0) {
             _animator.SetBool("Go", true);
         } else {
             _animator.SetBool("Go", false);
-            _animator.SetBool("Idle" , true); // todos!
+            
+            if (characterController.isGrounded)
+                _animator.SetBool("Idle" , true); // todos!
         }
        
         if (characterController.isGrounded) {
+            isJumping = false;
             _animator.SetBool("Jump" , false);
             vVelocity = 0;
             if (Input.GetKeyDown(KeyCode.Space)) 
                 Jump();
-        } 
+        }
         
-        
+        if (isJumping) {
+            _animator.SetBool("Jump" , true);
+            _animator.SetBool("Idle" , false);
+        }
         
         float z = 1f;
         Vector3 move = transform.forward * z * speed * Time.deltaTime;
@@ -87,15 +99,15 @@ public class PlayerController : MonoBehaviour {
     }
 
     
-    
-    
+
+
     private void MoveLeft() {
         if (currentIdx > 0) {
             currentIdx -= 1;
             // _animator.SetFloat("Direction" , -1);
 
             _animator.SetBool("Idle" , false);
-            transform.DOMoveX(List[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
                 
@@ -107,12 +119,12 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void MoveRight() {
-        if (currentIdx < List.Count - 1) {
+        if (currentIdx < lines.Count - 1) {
             currentIdx += 1;
             // _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle" , false);
                 
-            transform.DOMoveX(List[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
                
@@ -180,7 +192,7 @@ public class PlayerController : MonoBehaviour {
         // -> for x Movement
         if(xDistance>yDistance) {
             if(Distance.x>0)// Swipe Right
-    {
+            {
                 MoveRight();
             }
             if(Distance.x<0)// Swipe Left
@@ -209,8 +221,11 @@ public class PlayerController : MonoBehaviour {
 
 
     private void Jump() {
-        transform.DOMoveY(jumpHeight, jumpTime);
+        if (isJumping) return;
+        isJumping = true;
+        _animator.SetBool("Idle" , false);
         _animator.SetBool("Jump" , true);
+        transform.DOMoveY(jumpHeight, jumpTime);
         // vVelocity = jumpSpeed;
     }
     
