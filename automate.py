@@ -4,7 +4,7 @@
 import os
 from random import Random
 
-randomMessage = "bot-commit-message-Random-(" + "200" + ")"
+randomMessage = "bot-commit-message-Random-e479oq"
 
 os.system ("git status")
 os.system ("git add .")
