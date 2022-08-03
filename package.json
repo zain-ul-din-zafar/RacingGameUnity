@@ -12,7 +12,9 @@
   "version": "0.0.1" ,
   "devDependencies": {} ,
   "description": "" ,
-  "githubURL": "https://github.com/zainuldeen/RacingGameUnity" 
+  "githubURL": "https://github.com/zainuldeen/RacingGameUnity" ,
+  "contributors": [] ,
+  "readme": "./"
 } 
 
 
