@@ -1,0 +1,15 @@
+{
+  "author": {
+    "name": "unknown",
+    "email": ""
+  } ,
+  "committer": {
+        "name": "unknown",
+        "email": ""
+  } ,
+  "license": "MIT" ,
+  "dependencies": {} ,
+  "version": "0.0.1"
+} 
+
+
