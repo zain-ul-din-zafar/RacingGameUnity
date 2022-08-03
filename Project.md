@@ -12,6 +12,8 @@ TODOS:
    - Push it to production 
 -->
 
+Permission is hereby granted, free of charge, to any person
+
 <!-- END -->
 
     
