@@ -19,7 +19,7 @@ public class LevelSpawner : MonoBehaviour {
     private GameObject playerFollowCamera;
     [Tooltip("how far camera should be when to spawn next level")] [SerializeField]
     private float endPointOffSet;
-
+    
     private Transform _cameraTransform;
     private int _currentSpawnLevel;
     private float _endPoint;
@@ -73,9 +73,6 @@ public class LevelSpawner : MonoBehaviour {
     #endregion
     
     [System.Serializable]
-    public class Level {
-        public GameObject levelPrefab;
-        public Transform endPoint;
-    }
+    public class Level {  public GameObject levelPrefab; public Transform endPoint; }
 }
 
