@@ -1,5 +1,6 @@
-
 TODOS:
+<!-- 
+   TODOS:
    - Add Traffic System
    - Spawn Random Cars
    - Make Skate Board Control
@@ -9,3 +10,8 @@ TODOS:
    - Add UI
    - Add Google Ads
    - Push it to production 
+-->
+
+<!-- END -->
+
+    
