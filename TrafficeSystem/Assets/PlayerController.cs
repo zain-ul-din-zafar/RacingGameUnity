@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour {
@@ -117,9 +118,9 @@ public class PlayerController : MonoBehaviour {
         }
     }
     
-    [SerializeField] private float MinSwipeDistance=50f;// In -> px
-    [SerializeField] private float MaxSwipeTime=0.5f;// Max Time Requried to move 
-    private float SwipeTime;// Total Swipe Time
+    [FormerlySerializedAs("MinSwipeDistance")] [SerializeField] private float minSwipeDistance=50f;// In -> px
+    [FormerlySerializedAs("MaxSwipeTime")] [SerializeField] private float maxSwipeTime=0.5f;// Max Time Requried to move 
+    private float _swipeTime;// Total Swipe Time
   
     // Swipe Time
 
@@ -137,11 +138,11 @@ public class PlayerController : MonoBehaviour {
         if (Input.touchCount>0)
         {
             Touch touch = Input.GetTouch(0); // Take 1st Touch by User
-            if(touch.phase==TouchPhase.Began)// Toch starts 
+            if(touch.phase==TouchPhase.Began)// Touch starts 
             {
                 _swipeStartTime = Time.time;
                 _startSwipePos = touch.position;
-                // Get Time & Position of toch
+                // Get Time & Position of touch
             }
             else if(touch.phase==TouchPhase.Ended)// ?? Touch ended
             {
@@ -149,10 +150,10 @@ public class PlayerController : MonoBehaviour {
                 _endSwipePos = touch.position;
                 // Get Time & pos where Touch ended
 
-                SwipeTime = _swipeEndTime - _swipeStartTime;//Check how long User Swipe
+                _swipeTime = _swipeEndTime - _swipeStartTime;//Check how long User Swipe
                 _swipeLength = (_endSwipePos - _startSwipePos).magnitude;// Check Lenght
                 
-                if(SwipeTime<MaxSwipeTime && _swipeLength>MinSwipeDistance)// Time & Distance 
+                if(_swipeTime >= maxSwipeTime && _swipeLength > minSwipeDistance)// Time & Distance 
                 {
                     SwipeControl();
                 }
@@ -167,19 +168,17 @@ public class PlayerController : MonoBehaviour {
     void SwipeControl() {
        
         Vector2 Distance = _endSwipePos - _startSwipePos;// get pos of Touch 
-        float x_Distance = Mathf.Abs(Distance.x);
-        float Y_Distance = Mathf.Abs(Distance.y);
-        // Abs return's Postive value
+        float xDistance = Mathf.Abs(Distance.x);
+        float yDistance = Mathf.Abs(Distance.y);
+        // Abs return's Positive value
 
-        // -> for x Movment
-        if(x_Distance>Y_Distance)
-        {
+        // -> for x Movement
+        if(xDistance>yDistance) {
             if(Distance.x>0)// Swipe Right
-            {
+    {
                 MoveRight();
             }
             if(Distance.x<0)// Swipe Left
-
             {
                 MoveLeft();
             }       
@@ -187,7 +186,7 @@ public class PlayerController : MonoBehaviour {
 
         // -> for Y Movement
         
-        if(Y_Distance>x_Distance)
+        if(yDistance>xDistance)
         {
             if(Distance.y>0)// Swipe up
             {
@@ -207,6 +206,17 @@ public class PlayerController : MonoBehaviour {
     
 }
 
+
+
+/*
+ * Swipe Control working : DONE
+ * 
+ * TODOS:
+ * -> make code better
+ * -> Add Jump
+ * -> Improve Gravity
+ * -> Add cine-machine 
+ */
 
 // using System.Collections.Generic;
 // using UnityEngine;
