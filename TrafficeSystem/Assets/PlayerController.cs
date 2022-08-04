@@ -207,6 +207,17 @@ public class PlayerController : MonoBehaviour {
 }
 
 
+
+/*
+ * Swipe Control working : DONE
+ * 
+ * TODOS:
+ * -> make code better
+ * -> Add Jump
+ * -> Improve Gravity
+ * -> Add cine-machine 
+ */
+
 // using System.Collections.Generic;
 // using UnityEngine;
 // using DG.Tweening;
