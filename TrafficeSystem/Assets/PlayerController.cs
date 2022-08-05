@@ -17,8 +17,8 @@ public class PlayerController : MonoBehaviour {
 
     [SerializeField] private float slideTime = 2f;
     [SerializeField] private float gravity = 9.8f;
-    [SerializeField] private float jumpSpeed = 10f;
-    
+    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private float jumpTime = 0.5f;
    
     [SerializeField] private Transform meshTransform;
     
@@ -39,11 +39,8 @@ public class PlayerController : MonoBehaviour {
         if (characterController.isGrounded) {
             _animator.SetBool("Jump" , false);
             vVelocity = 0;
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                vVelocity = jumpSpeed;
-               _animator.SetBool("Jump" , true);
-            }
-            
+            if (Input.GetKeyDown(KeyCode.Space)) 
+                Jump();
         } 
         
         
@@ -188,10 +185,11 @@ public class PlayerController : MonoBehaviour {
         
         if(yDistance>xDistance)
         {
-            if(Distance.y>0)// Swipe up
-            {
-                vVelocity = jumpSpeed;
-                _animator.SetBool("Jump" , true);
+            if (characterController.isGrounded) {
+                _animator.SetBool("Jump" , false);
+                vVelocity = 0;
+                if(Distance.y>0) // Swipe up
+                    Jump();
             }
             if(Distance.y<0)// Swipe Down
             {
@@ -200,6 +198,13 @@ public class PlayerController : MonoBehaviour {
         }
     }// <- Swipe control
 
+
+
+    private void Jump() {
+        transform.DOMoveY(jumpHeight, jumpTime);
+        _animator.SetBool("Jump" , true);
+        // vVelocity = jumpSpeed;
+    }
     
     private void LateUpdate() =>
         _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
