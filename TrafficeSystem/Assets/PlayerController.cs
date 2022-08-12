@@ -1,16 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.Serialization;
 
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour {
+
     private CharacterController characterController;
     [SerializeField] private float speed = 6.0f;
     [SerializeField] private Camera _camera;
-    [SerializeField] private List<Vector3> List;
+    [SerializeField] private List<Vector3> lines;
     [SerializeField] private float cameraOffSet = 3f;
-    private int currentIdx = 1;
+    [SerializeField] private int currentIdx = 1;
     [SerializeField] private float lerpDuration = 0.5f;
 
     [SerializeField] private Animator _animator;
@@ -21,11 +24,29 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float jumpTime = 0.5f;
    
     [SerializeField] private Transform meshTransform;
-    
+    [SerializeField] private float rayCastDistance = 1.5f;
+    [SerializeField] private LayerMask groundLayer;
+    private bool isJumping;
     private float vVelocity;
-    private void Awake() {  characterController = GetComponent<CharacterController>(); }
+
+    private void Awake() {
+        characterController = GetComponent<CharacterController>();
+        transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
+    }
+
+    private IEnumerator Start() {
+        while (true) {
+            yield return new WaitForSeconds(5f);
+            speed += Time.deltaTime;
+        }
+    }
     
     private void Update() {
+        CharacterController (); 
+    }
+    
+    private void CharacterController () {
+       bool isGrounded = IsGrounded ();
 
         slideTime -= Time.deltaTime;
         
@@ -33,61 +54,53 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool("Go", true);
         } else {
             _animator.SetBool("Go", false);
-            _animator.SetBool("Idle" , true); // todos!
+            
+            if (isGrounded)
+                _animator.SetBool("Idle" , true); 
         }
        
-        if (characterController.isGrounded) {
-            _animator.SetBool("Jump" , false);
-            vVelocity = 0;
-            if (Input.GetKeyDown(KeyCode.Space)) 
-                Jump();
-        } 
-        
-        
-        
         float z = 1f;
         Vector3 move = transform.forward * z * speed * Time.deltaTime;
         vVelocity -= gravity * Time.deltaTime;
         move.y = vVelocity * Time.deltaTime;
         characterController.Move(move);
         
-        
         // move player left and right
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) 
-            // move left
-            MoveLeft();
-        else if (Input.GetKeyDown(KeyCode.RightArrow)) 
-            // move right
-            MoveRight();
-        else 
-            _animator.SetFloat("Direction" , 0);
+        if (Input.GetKeyDown(KeyCode.LeftArrow)) MoveLeft();
+        else if (Input.GetKeyDown(KeyCode.RightArrow)) MoveRight();
+        else _animator.SetFloat("Direction" , 0);
         
+        if (isGrounded) {
+            isJumping = false;
+            _animator.SetBool("Jump" , false);
+            vVelocity = 0;
+            if (Input.GetKeyDown(KeyCode.Space)) 
+                Jump();
+        } 
+        
+        if (isJumping) {
+            _animator.SetBool("Jump" , true);
+            _animator.SetBool("Idle" , false);
+        }
 
         GetTouchInput();
-        
-        // lerp to left
-        //transform.position = Vector3.Lerp(transform.position, new Vector3 (List[currentIdx].x , transform.position.y , transform.position.z ), Time.deltaTime * lerpSpeed);
-        
-        // move to x directions
-        
-        
-        // follow player
-        
-        
-        // Add Gravity
-        
+    }
+    
+    private bool IsGrounded () {
+        if (Physics.Raycast (transform.position , Vector3.down , out RaycastHit hitInfo , 1.5f , groundLayer)){   
+            Debug.DrawLine (transform.position , hitInfo.point , Color.black);// !debug
+            return true;
+        }
+        return false;
     }
 
-    
-    
-    
     private void MoveLeft() {
         if (currentIdx > 0) {
             currentIdx -= 1;
             // _animator.SetFloat("Direction" , -1);
 
             _animator.SetBool("Idle" , false);
-            transform.DOMoveX(List[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
                 
@@ -99,12 +112,12 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void MoveRight() {
-        if (currentIdx < List.Count - 1) {
+        if (currentIdx < lines.Count - 1) {
             currentIdx += 1;
             // _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle" , false);
                 
-            transform.DOMoveX(List[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
                
@@ -115,17 +128,24 @@ public class PlayerController : MonoBehaviour {
         }
     }
     
+    private void Jump() {
+        if (isJumping) return;
+        isJumping = true;
+        _animator.SetBool("Idle" , false);
+        _animator.SetBool("Jump" , true);
+        transform.DOMoveY(jumpHeight, jumpTime);
+        // vVelocity = jumpSpeed;
+    }
+
     [FormerlySerializedAs("MinSwipeDistance")] [SerializeField] private float minSwipeDistance=50f;// In -> px
     [FormerlySerializedAs("MaxSwipeTime")] [SerializeField] private float maxSwipeTime=0.5f;// Max Time Requried to move 
     private float _swipeTime;// Total Swipe Time
-  
+    
     // Swipe Time
-
     private float _swipeEndTime;// Time at Swipe End
     private float _swipeStartTime;// Time at Swipe Start
     private float _swipeLength;// Lenght of Swipe
     // Swipe Pos
-
     private Vector2 _startSwipePos;// Swipe Start pos
     private Vector2 _endSwipePos;// End pos
     
@@ -172,7 +192,7 @@ public class PlayerController : MonoBehaviour {
         // -> for x Movement
         if(xDistance>yDistance) {
             if(Distance.x>0)// Swipe Right
-    {
+            {
                 MoveRight();
             }
             if(Distance.x<0)// Swipe Left
@@ -200,11 +220,7 @@ public class PlayerController : MonoBehaviour {
 
 
 
-    private void Jump() {
-        transform.DOMoveY(jumpHeight, jumpTime);
-        _animator.SetBool("Jump" , true);
-        // vVelocity = jumpSpeed;
-    }
+    
     
     private void LateUpdate() =>
         _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);

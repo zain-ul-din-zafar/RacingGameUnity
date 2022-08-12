@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 
 public class LevelSpawner : MonoBehaviour {
@@ -37,6 +36,7 @@ public class LevelSpawner : MonoBehaviour {
         levelPrefabs.ForEach(levelPrefab => {
             var prefab = Instantiate(levelPrefab, spawnPosition, Quaternion.identity);
             var endPointRef = new GameObject("EndPoint");
+            float total = 0;
             endPointRef.transform.position = new Vector3(0, 0, _endPoint);
             endPointRef.transform.parent = prefab.transform;
             prefab.SetActive(false);
