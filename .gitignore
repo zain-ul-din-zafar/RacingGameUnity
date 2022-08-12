@@ -76,3 +76,14 @@ crashlytics-build.properties
 *3ds
 *max
 *max3ds
+
+/TrafficeSystem\Assets\PowerUps FullPackage
+
+*.meta
+*.plugin
+*.png
+*.mat
+*.prefab
+*.tga
+*.unity
+*.cubemap

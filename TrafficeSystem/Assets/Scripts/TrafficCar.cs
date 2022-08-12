@@ -1,5 +1,4 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent (typeof(Rigidbody))]
 public class TrafficCar : MonoBehaviour {
@@ -15,7 +14,7 @@ public class TrafficCar : MonoBehaviour {
 			return _trafficPoolingInstance;
 		}
 	}
-
+	
 	#endregion
 
 	private Rigidbody rigid;
@@ -113,6 +112,7 @@ public class TrafficCar : MonoBehaviour {
 	
 	}
 
+	
 	void Start(){
 
 		InvokeRepeating("SpeedUp", 4f, 4f);
@@ -135,7 +135,7 @@ public class TrafficCar : MonoBehaviour {
 			signalLights[i].renderMode = LightRenderMode.ForceVertex;
 
 		}
-
+        
 	}
 
 	void Update () {
