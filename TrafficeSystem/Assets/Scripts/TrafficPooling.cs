@@ -23,20 +23,26 @@ public class TrafficPooling : MonoBehaviour {
 	public bool animateNow = true;
 	
 	public TrafficCars[] trafficCars;
-
+	public List <PowerUps> powerUps;
+    
 	[System.Serializable]
 	public class TrafficCars{
 		public GameObject trafficCar;
 		public int frequence = 1;
 	}
 	
+	[System.Serializable]
+	public class PowerUps {
+		public GameObject powerUp;
+		public int frequence = 1;
+	}
+
 	private List<TrafficCar> _trafficCars = new List<TrafficCar>();
+    private List<PowerUps> _powerUps = new List<PowerUps> ();
 
 	void Start () {
-
 		reference = Camera.main.transform;
 		CreateTraffic();
-
 	}
 
 	void Update(){ if(animateNow) AnimateTraffic();  }
@@ -56,18 +62,42 @@ public class TrafficPooling : MonoBehaviour {
 
 		}
 		
+		// create Power Ups
+		for (int i = 0 ; i < powerUps.Count ; i += 1) {
+			for (int j = 0 ; j < powerUps[i].frequence ; j += 1) {
+				var powerUp = Instantiate (powerUps[i].powerUp , Vector3.zero , Quaternion.identity) as GameObject;
+				_powerUps.Add (new PowerUps{powerUp = powerUp , frequence = powerUps[i].frequence });
+				powerUp.SetActive (false);
+			}
+		}
 	}
 
 	void AnimateTraffic () {
 		
 		for (int i = 0; i < _trafficCars.Count; i++) {
-			
 			if(reference.transform.position.z > (_trafficCars[i].transform.position.z + 15) || reference.transform.position.z < (_trafficCars[i].transform.position.z - (325)))
 				ReAlignTraffic(_trafficCars[i]);
 		}
 		
+		for (int i = 0 ; i < _powerUps.Count ; i += 1) {
+			if (
+				reference.transform.position.z > (_powerUps[i].powerUp.transform.position.z + 14) 
+			    ||
+				reference.transform.position.z < (_powerUps[i].powerUp.transform.position.z - (325))
+			) {
+                SpawnPowerUps (_powerUps[i].powerUp);
+			}
+		}
 	}
 
+    void SpawnPowerUps (GameObject powerUp) {
+       if (!powerUp.activeSelf)
+	    powerUp.SetActive (true);
+       
+	   int randomLine = Random.Range (0 , lines.Length);
+       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y, (reference.transform.position.z + (Random.Range(100, 350))));
+	}
+	
 	void ReAlignTraffic(TrafficCar realignableObject){
 
 		if(!realignableObject.gameObject.activeSelf)
@@ -103,7 +133,6 @@ public class TrafficPooling : MonoBehaviour {
 
 		if(CheckIfClipping(realignableObject.triggerCollider))
 			realignableObject.gameObject.SetActive(false);
-
 	}
 
 	bool CheckIfClipping(BoxCollider trafficCarBound){
