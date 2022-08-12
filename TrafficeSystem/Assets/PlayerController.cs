@@ -28,7 +28,8 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private LayerMask groundLayer;
     private bool isJumping;
     private float vVelocity;
-
+    
+    [Space (10)] [SerializeField] private List <string> tagsToCompare;
     private void Awake() {
         characterController = GetComponent<CharacterController>();
         transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
@@ -46,7 +47,7 @@ public class PlayerController : MonoBehaviour {
     }
     
     private void CharacterController () {
-       bool isGrounded = IsGrounded ();
+        bool isGrounded = IsGrounded ();
 
         slideTime -= Time.deltaTime;
         
@@ -74,9 +75,8 @@ public class PlayerController : MonoBehaviour {
             isJumping = false;
             _animator.SetBool("Jump" , false);
             vVelocity = 0;
-            if (Input.GetKeyDown(KeyCode.Space)) 
-                Jump();
-        } 
+            if (Input.GetKeyDown(KeyCode.Space)) Jump();
+        } else isJumping = true;
         
         if (isJumping) {
             _animator.SetBool("Jump" , true);
@@ -149,8 +149,8 @@ public class PlayerController : MonoBehaviour {
     private Vector2 _startSwipePos;// Swipe Start pos
     private Vector2 _endSwipePos;// End pos
     
-    private void GetTouchInput()
-    {
+    
+    private void GetTouchInput() {
        
         if (Input.touchCount>0)
         {
@@ -218,10 +218,20 @@ public class PlayerController : MonoBehaviour {
         }
     }// <- Swipe control
 
+    private void OnCollisionEnter (Collision other) {
+      Debug.Log ("Collide" + other.gameObject.name);
+    }
+    private int coins = 0;
+    private void OnTriggerEnter (Collider other) {
+        if (tagsToCompare.Contains (other.gameObject.tag)) {
+           coins += 1;
+           Debug.Log ("Trigger Enter " + coins);
+           GameManager.Instance.gameState.coins += 1;
+           SoundManager.Instance.PlaySound (SoundManager.SoundClip.CoinSound);
+           other.gameObject.SetActive (false);
+        }
+    }
 
-
-    
-    
     private void LateUpdate() =>
         _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
     
@@ -229,107 +239,3 @@ public class PlayerController : MonoBehaviour {
 
 
 
-/*
- * Swipe Control working : DONE
- * 
- * TODOS:
- * -> make code better
- * -> Add Jump
- * -> Improve Gravity
- * -> Add cine-machine 
- */
-
-// using System.Collections.Generic;
-// using UnityEngine;
-// using DG.Tweening;
-//
-// [RequireComponent(typeof (CharacterController))]
-// public class PlayerController : MonoBehaviour {
-//     private CharacterController characterController;
-//     [SerializeField] private float speed = 6.0f;
-//     [SerializeField] private Camera _camera;
-//     [SerializeField] private List<Vector3> List;
-//     [SerializeField] private float cameraOffSet = 3f;
-//     private int currentIdx = 1;
-//     [SerializeField] private float lerpSpeed = 0.5f;
-//
-//     [SerializeField] private Animator _animator;
-//
-//     [SerializeField] private float slideTime = 2f;
-//     [SerializeField] private float gravity = 9.8f;
-//     [SerializeField] private float jumpSpeed = 10f;
-//     
-//     private float vVelocity;
-//     private void Awake() {  characterController = GetComponent<CharacterController>(); }
-//     
-//     private void Update() {
-//
-//         slideTime -= Time.deltaTime;
-//         
-//         if (slideTime > 0) {
-//             _animator.SetBool("Go", true);
-//         } else {
-//             _animator.SetBool("Go", false);
-//             _animator.SetBool("Idle" , true);
-//         }
-//        
-//         if (characterController.isGrounded) {
-//             _animator.SetBool("Jump" , false);
-//             vVelocity = 0;
-//             if (Input.GetKeyDown(KeyCode.Space)) {
-//                 vVelocity = jumpSpeed;
-//                 _animator.SetBool("Jump" , true);
-//             }
-//             
-//         } 
-//         
-//         
-//         
-//         float z = 1f;
-//         Vector3 move = transform.forward * z * speed * Time.deltaTime;
-//         vVelocity -= gravity * Time.deltaTime;
-//         move.y = vVelocity * Time.deltaTime;
-//         Debug.Log(move);
-//         characterController.Move(move);
-//         
-//         // move player left and right
-//         if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-//             // move left
-//             if (currentIdx > 0) {
-//                 currentIdx -= 1;
-//                 _animator.SetFloat("Direction" , -1);
-//                 transform.DOMoveX(List[currentIdx].x , lerpSpeed).SetEase(Ease.InOutSine);
-//               
-//             }
-//         }
-//         else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-//             // move right
-//             if (currentIdx < List.Count - 1) {
-//                 currentIdx += 1;
-//                 _animator.SetFloat("Direction" , 1);
-//                 transform.DOMoveX(List[currentIdx].x , lerpSpeed).SetEase(Ease.InOutSine);
-//                
-//             }
-//         }
-//         else {
-//             _animator.SetFloat("Direction" , 0);
-//         }
-//
-//         // lerp to left
-//         //transform.position = Vector3.Lerp(transform.position, new Vector3 (List[currentIdx].x , transform.position.y , transform.position.z ), Time.deltaTime * lerpSpeed);
-//         
-//         // move to x directions
-//         
-//         
-//         // follow player
-//         
-//         
-//         // Add Gravity
-//     }
-//
-//
-//     private void LateUpdate() {
-//         _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
-//
-//     }
-// }

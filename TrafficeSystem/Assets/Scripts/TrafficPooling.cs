@@ -1,5 +1,5 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 public class TrafficPooling : MonoBehaviour {
@@ -62,7 +62,7 @@ public class TrafficPooling : MonoBehaviour {
 
 		}
 		
-		// create Power Ups
+		// creates Power Ups
 		for (int i = 0 ; i < powerUps.Count ; i += 1) {
 			for (int j = 0 ; j < powerUps[i].frequence ; j += 1) {
 				var powerUp = Instantiate (powerUps[i].powerUp , Vector3.zero , Quaternion.identity) as GameObject;
@@ -70,6 +70,8 @@ public class TrafficPooling : MonoBehaviour {
 				powerUp.SetActive (false);
 			}
 		}
+
+		
 	}
 
 	void AnimateTraffic () {
@@ -84,20 +86,24 @@ public class TrafficPooling : MonoBehaviour {
 				reference.transform.position.z > (_powerUps[i].powerUp.transform.position.z + 14) 
 			    ||
 				reference.transform.position.z < (_powerUps[i].powerUp.transform.position.z - (325))
-			) {
-                SpawnPowerUps (_powerUps[i].powerUp);
-			}
+			) { SpawnPowerUps (_powerUps[i].powerUp); }
 		}
 	}
 
     void SpawnPowerUps (GameObject powerUp) {
-       if (!powerUp.activeSelf)
-	    powerUp.SetActive (true);
+       if (!powerUp.activeSelf) powerUp.SetActive (true);
        
 	   int randomLine = Random.Range (0 , lines.Length);
-       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y, (reference.transform.position.z + (Random.Range(100, 350))));
+       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y, (reference.transform.position.z + (Random.Range(300, 1000))));
 	}
 	
+    private IEnumerator SpawnPowerUp (float timeDelay , GameObject powerUp) {
+		for (;true;) {
+         yield return new WaitForSeconds (timeDelay);
+         SpawnPowerUps (powerUp);
+		}
+	}
+
 	void ReAlignTraffic(TrafficCar realignableObject){
 
 		if(!realignableObject.gameObject.activeSelf)
