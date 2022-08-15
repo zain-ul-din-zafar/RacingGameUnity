@@ -77,7 +77,7 @@ crashlytics-build.properties
 *max
 *max3ds
 
-/TrafficeSystem\Assets\PowerUps FullPackage
+/TrafficeSystem/Assets/PowerUps FullPackage
 
 *.meta
 *.plugin
@@ -87,4 +87,8 @@ crashlytics-build.properties
 *.tga
 *.unity
 *.cubemap
+*.dll
+*.ddl
 
+*.asset
+/SpaningTest

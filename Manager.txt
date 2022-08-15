@@ -1,0 +1,6 @@
+# Custom Scripts List
+
+-> PlayerController
+-> LevelSpawner
+-> SoundManger
+-> GameManger && GameStateSO

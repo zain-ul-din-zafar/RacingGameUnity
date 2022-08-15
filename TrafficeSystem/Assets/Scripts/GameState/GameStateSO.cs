@@ -4,8 +4,32 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "GameState", menuName = "ScriptableObject/GameState")]
-class GameStateSO : ScriptableObject {
-    public int testVariable;
-    public int unLockPlayer;
+public class GameStateSO : ScriptableObject {
+    public long coins;
+    private int level;
+
+    public enum ActionType {
+        Coin ,
+        Level
+    }
+
+    public void SetState  (ActionType actionType , object payload) {
+        switch (actionType) {
+            case ActionType.Coin:
+                // 
+                try {
+                 coins = Convert.ToInt32 (payload);
+                } catch (System.OverflowException exce) {
+
+                }
+            break;
+            case ActionType.Level :
+            //   level = payload;
+            break;
+        }
+    }
 }
+
+
+
 
