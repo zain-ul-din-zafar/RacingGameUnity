@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using RandomsUtilities;
 
 public class TrafficPooling : MonoBehaviour {
 
@@ -48,19 +49,19 @@ public class TrafficPooling : MonoBehaviour {
 		CreateTraffic();
 	}
 
-	void Update(){ if(animateNow) AnimateTraffic();  }
+	void Update(){ 
+		if(animateNow) { AnimateTraffic(); DestoryAllCarsBehindPlayer(); }  
+	}
 
 	void CreateTraffic () {
 		
 		for (int i = 0; i < trafficCars.Length; i++) {
 
 			for (int k = 0; k < trafficCars[i].frequence; k++) {
-				
 //				GameObject go = (GameObject)GameObject.Instantiate(trafficCars[i].trafficCar, trafficCars[i].trafficCar.transform.position, trafficCars[i].trafficCar.transform.rotation);
 				GameObject go = Instantiate(trafficCars[i].trafficCar, Vector3.zero, Quaternion.identity);
 				_trafficCars.Add(go.GetComponent<TrafficCar>());
 				go.SetActive(false);
-
 			}
 
 		}
@@ -107,7 +108,7 @@ public class TrafficPooling : MonoBehaviour {
        
 	   powerUp.SetActive (true);
 	   int randomLine = Random.Range (0 , lines.Length);
-       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y, reference.transform.position.z + Random.Range(100, 300));
+       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y + 1f, reference.transform.position.z + Random.Range(100, 300));
 	}
 	
     
@@ -184,4 +185,27 @@ public class TrafficPooling : MonoBehaviour {
 		return false;
 
 	}
+    
+    private void SpawnCleaner () {
+     foreach (var powerUp in  _powerUps) 
+	  if(PlayerController.Instance.gameObject.transform.position.z > powerUp.powerUp.transform.position.z + 3f) {
+		powerUp.powerUp.SetActive(false);
+	  }
+    }
+   
+	private void DestoryAllCarsBehindPlayer () {
+		
+		// use special powers
+		// Utilities.QuickSort <TrafficCar> (0 , _trafficCars.Count - 1 , ref _trafficCars , (TrafficCar lhs , TrafficCar rhs)=>{
+		// 	return lhs.gameObject.transform.position.z < rhs.gameObject.transform.position.z;
+		// });
+        
+       for (int i = 0; i < _trafficCars.Count; i++) {
+			if(PlayerController.Instance.gameObject.transform.position.z > _trafficCars[i].transform.position.z + 3f){
+				_trafficCars[i].gameObject.SetActive(false);
+			}
+		}
+	}
+    
+    
 }
