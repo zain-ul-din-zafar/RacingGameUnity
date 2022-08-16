@@ -8,6 +8,8 @@ using RandomsUtilities;
 
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour {
+    
+    public static PlayerController Instance {get; private set;}
 
     private CharacterController characterController;
     [SerializeField] private float speed = 6.0f;
@@ -35,6 +37,9 @@ public class PlayerController : MonoBehaviour {
     private float SPEED ;
 
     private void Awake() {
+        if (Instance) Destroy (this);
+        
+        Instance = this;
         characterController = GetComponent<CharacterController>();
         characterCollider = GetComponent <CharacterController> ();
         SPEED = speed;
@@ -228,17 +233,16 @@ public class PlayerController : MonoBehaviour {
     }// <- Swipe control
 
     private void OnCollisionEnter (Collision other) {
-       HandleCarCollision (other);
+        if (other.gameObject.tag == "TrafficCar") HandleCarCollision (other);
     }
  
     private int coins = 0;
     private void OnTriggerEnter (Collider other) {
-        Debug.Log ("Collide");
         if (tagsToCompare.Contains (other.gameObject.tag)) {
            coins += 1;
            GameManager.Instance.gameState.coins += 1;
            SoundManager.Instance.PlaySound (SoundManager.SoundClip.CoinSound);
-           other.gameObject.SetActive (false);
+           other.gameObject.SetActive (false); 
         }
     }
 
@@ -252,15 +256,22 @@ public class PlayerController : MonoBehaviour {
     private void HandleCarCollision (Collision other) {
         var otherTransform = other.gameObject.transform;
         
-        if (!Utilities.IsPlayerBehindGameObject (transform , otherTransform)) return; // player should be behind car
+        if (otherTransform.position.z < transform.position.z)  {
+            otherTransform.gameObject.SetActive(false);
+            return;
+        }
         
+        if (!Utilities.IsPlayerBehindGameObject (transform , otherTransform) || isJumping) return; // player should be behind car
+        
+        SoundManager.Instance.PlaySound (SoundManager.SoundClip.CrashSound);
         _animator.SetBool ("IsCollide" , true);
-        otherTransform.DOMoveZ (otherTransform.position.z + 60f + UnityEngine.Random.Range (5 , 20)  , 1f)
+        otherTransform.DOMoveZ (otherTransform.position.z + 40f + UnityEngine.Random.Range (5 , 10)  , 1f)
         .SetEase (Ease.OutSine)
         .OnComplete(()=>{
           _animator.SetBool ("IsCollide" , false);
         }); // OutFlash
         
+
         // change random line
         int lOrR = UnityEngine.Random.Range (0,2);
         Debug.Log (lOrR);
@@ -278,10 +289,12 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void SmoothlyLerpSpeed () {
-      float smoothTime = 0.01f;
+      float smoothTime = 0.1f;
       float yVelocity = 0.0f;
       speed = Mathf.SmoothDamp(speed, SPEED, ref yVelocity, smoothTime); 
     }
+
+    
 }
 
 

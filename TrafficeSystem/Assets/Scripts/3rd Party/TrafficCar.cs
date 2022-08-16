@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using DG.Tweening;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
 
 [RequireComponent (typeof(Rigidbody))]
 public class TrafficCar : MonoBehaviour {
@@ -312,35 +315,67 @@ public class TrafficCar : MonoBehaviour {
 		}
 
 	}
+   
+    
 
 	void OnTriggerStay(Collider col){
 
-		if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value || col.isTrigger)
-			return;
+		// if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value || col.isTrigger)
+		// 	return;
 
-		distance = Vector3.Distance(transform.position, col.transform.position);
-		TrafficCar tc;
-		col.gameObject.TryGetComponent <TrafficCar>(out tc);
-		if (tc) {
-			tc.desiredSpeed = this.desiredSpeed + Random.Range (2 , 4);
-			col.gameObject.transform.DOMoveZ (transform.position.z + 20f , 1).SetEase (Ease.OutFlash);
-		}
+		if (!col.CompareTag ("TrafficCar")) return;
+        
+		// Debug.Log ("Collide Stay!!");
+
+		// // Keep Distance From other cars
+		// if(transform.position.z > col.transform.position.z)
+		// 	transform.DOMoveZ (col.transform.position.z + 1f, .5f);
+
+		// Debug.Log ("Trigger Cars");
+		// col.gameObject.transform.DOMoveZ (transform.position.z + 50f , 1).SetEase (Ease.OutFlash);
+		// distance = Vector3.Distance(transform.position, col.transform.position);
+		// TrafficCar tc;
+		// col.gameObject.TryGetComponent <TrafficCar>(out tc);
+        // tc.desiredSpeed = this.desiredSpeed + Random.Range (2 , 4);
 	}
     
 	void OnTriggerExit(Collider col){
 
-		if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value)
-			return;
+        
+		if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value) return;
         
 	}
+   
+    private static Stack <GameObject> collideHistory = new Stack <GameObject>();
+    
+	void OnCollisionEnter(Collision col) {
 
-	void OnCollisionEnter(Collision col){
-
-		if(immobilized || spawnProtection < .5f)
-			return;
-
+		if(immobilized || spawnProtection < .5f) return;
+        
+		if (col.gameObject.tag == "TrafficCar") {
+			
+			Debug.Log ("Collide");
+			// always add force to car that is next to car which collide with player
+			if (collideHistory.Count == 0)  collideHistory.Push (gameObject); 
+             
+			if (col.gameObject == collideHistory.Peek ()) {
+				//Debug.LogError ("Same Car");
+				//Debug.Break();
+				return;
+			}
+			
+			DOTween.KillAll();
+		    col.gameObject.transform.DOMoveZ (transform.position.z + 40f , 1).SetEase (Ease.OutFlash);
+			collideHistory.Push (gameObject);
+		}
+        
 		// immobilized = true;
 		// signalsOn = SignalsOn.All;
+	}
+   
+    private void OnCollisionExit (Collision col) {
+		if (col.gameObject.tag == "TrafficCar" && collideHistory.Peek() == gameObject)
+			collideHistory.Pop ();		
 	}
 
 	void OnReAligned(){
