@@ -10,12 +10,12 @@ namespace RandomsUtilities {
     /// Returns Player behind gameObject 
     /// </summary>
     public static bool IsPlayerBehindGameObject (Transform player , Transform gameObject, float backStabOffSet = .2f) {
-        Vector3 dirDiff = (player.position - gameObject.position).normalized; 
-        float dotProduct = Vector3.Dot (player.forward , gameObject.forward);
-        // return dotProduct <= -1 + backStabOffSet;
-        return dotProduct == 1;
+        Vector3 toTarget = (gameObject.position - player.position).normalized;
+        return Vector3.Dot(toTarget, player.transform.forward) > 0; // GameObject is in the front of player
     }
     
+    
+
     /// <summary>
     /// Quick Sort
     /// CallBack : Action (T lhs , T rhs) => bool | USAGE :- lhs < rhs
@@ -45,7 +45,8 @@ namespace RandomsUtilities {
     }
     
   }
-
+  
+  
   
 }
 
