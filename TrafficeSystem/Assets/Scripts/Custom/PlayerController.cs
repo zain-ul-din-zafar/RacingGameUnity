@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
-using RandomsUtilities;
 
 
 [RequireComponent(typeof (CharacterController))]
@@ -19,7 +18,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private int currentIdx = 1;
     [SerializeField] private float lerpDuration = 0.5f;
 
-    [SerializeField] private Animator _animator;
+    public Animator _animator {get; private set;}
 
     [SerializeField] private float slideTime = 2f;
     [SerializeField] private float gravity = 9.8f;
@@ -30,20 +29,29 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float rayCastDistance = 1.5f;
     [Space (10)] [SerializeField] private List <string> tagsToCompare;
     [SerializeField] private LayerMask groundLayer;
+    [Space(10)][SerializeField] private LayerMask carLayerMask;  
+
+    [Space(20)] [Header ("Control Buttons Reference!")]
+    [SerializeField] private ButtonController leftBtn;  
+    [SerializeField] private ButtonController rightBtn;
 
     private bool isJumping;
     private float vVelocity;
     private Collider characterCollider;
     private float SPEED ;
+    private bool isDelayTime;
+    private float touchDelayTime = 0.2f;
+    private float _touchDelayTime;
 
     private void Awake() {
         if (Instance) Destroy (this);
-        
+        _touchDelayTime = touchDelayTime;
         Instance = this;
         characterController = GetComponent<CharacterController>();
         characterCollider = GetComponent <CharacterController> ();
         SPEED = speed;
         transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
+        _animator = GetComponentInChildren <Animator> ();
     }
 
     private IEnumerator Start() {
@@ -53,9 +61,7 @@ public class PlayerController : MonoBehaviour {
         }
     }
     
-    private void Update() {
-        CharacterController (); 
-    }
+    private void Update() => CharacterController ();  
     
     private void CharacterController () {
         bool isGrounded = IsGrounded ();
@@ -66,9 +72,7 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool("Go", true);
         } else {
             _animator.SetBool("Go", false);
-            
-            if (isGrounded)
-                _animator.SetBool("Idle" , true); 
+            if (isGrounded) _animator.SetBool("Idle" , true); 
         }
        
         float z = 1f;
@@ -78,8 +82,8 @@ public class PlayerController : MonoBehaviour {
         characterController.Move(move);
         
         // move player left and right
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) MoveLeft();
-        else if (Input.GetKeyDown(KeyCode.RightArrow)) MoveRight();
+        if (Input.GetKey(KeyCode.LeftArrow)) MoveLeft();
+        else if (Input.GetKey(KeyCode.RightArrow)) MoveRight();
         else _animator.SetFloat("Direction" , 0);
         
         if (isGrounded) {
@@ -92,10 +96,12 @@ public class PlayerController : MonoBehaviour {
         if (isJumping) {
             _animator.SetBool("Jump" , true);
             _animator.SetBool("Idle" , false);
+            _animator.SetBool ("IsCollide" , false);
         }
 
         GetTouchInput();
         SmoothlyLerpSpeed ();
+        AddTouchDelay ();
     }
     
     private bool IsGrounded () {
@@ -105,17 +111,22 @@ public class PlayerController : MonoBehaviour {
         }
         return false;
     }
+    
+    private void AddTouchDelay () {
+        _touchDelayTime -= Time.deltaTime;
+        isDelayTime = _touchDelayTime > 0;
+        if (_touchDelayTime <= 0) _touchDelayTime = 0;
+    }
 
     private void MoveLeft() {
         if (CanMoveLeft()) {
             currentIdx -= 1;
+            _touchDelayTime = touchDelayTime;  
             // _animator.SetFloat("Direction" , -1);
-
             _animator.SetBool("Idle" , false);
             transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
-                
             // rotate in y direction
             meshTransform.DORotate(new Vector3(0, -45, 0), lerpDuration ).OnComplete(() => {
                 meshTransform.DORotate(new Vector3(0, 0, 0), lerpDuration );
@@ -124,15 +135,15 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void MoveRight() {
+        
         if (CanMoverRight ()) {
             currentIdx += 1;
+            _touchDelayTime = touchDelayTime;  
             // _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle" , false);
-                
             transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
-            });
-               
+            });  
             // rotate in y direction
             meshTransform.DORotate(new Vector3(0, 45, 0), lerpDuration ).OnComplete(() => {
                 meshTransform.DORotate(new Vector3(0, 0, 0), lerpDuration);
@@ -166,6 +177,7 @@ public class PlayerController : MonoBehaviour {
     
     private void GetTouchInput() {
        
+       #if UNITY_EDITOR || UNITY_EDITOR_WIN  // if unity editor
         if (Input.touchCount>0)
         {
             Touch touch = Input.GetTouch(0); // Take 1st Touch by User
@@ -190,6 +202,12 @@ public class PlayerController : MonoBehaviour {
                 }
             }
         }
+        #elif UNITY_ANDROID || UNITY_IPHONE
+          if (leftBtn.isPressing || rightBtn.isPressing){
+             if (leftBtn.isPressing) MoveLeft();
+             if (rightBtn.isPressing) MoveRight();
+          }
+        #endif
         else {
             _animator.SetFloat("Direction" , 0);
         }
@@ -250,42 +268,44 @@ public class PlayerController : MonoBehaviour {
        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
 
     // Helper Functions
-    private bool CanMoverRight () => currentIdx < lines.Count - 1;
-    private bool CanMoveLeft () => currentIdx > 0;   
+    private bool CanMoverRight () => currentIdx < lines.Count - 1 && !isDelayTime;
+    private bool CanMoveLeft () => currentIdx > 0 && !isDelayTime;   
 
     private void HandleCarCollision (Collision other) {
         var otherTransform = other.gameObject.transform;
         
-        if (otherTransform.position.z < transform.position.z)  {
+        if (otherTransform.position.z < transform.position.z - 5f && !isJumping)  {
             otherTransform.gameObject.SetActive(false);
             return;
         }
         
-        if (!Utilities.IsPlayerBehindGameObject (transform , otherTransform) || isJumping) return; // player should be behind car
-        
-        SoundManager.Instance.PlaySound (SoundManager.SoundClip.CrashSound);
-        _animator.SetBool ("IsCollide" , true);
-        otherTransform.DOMoveZ (otherTransform.position.z + 40f + UnityEngine.Random.Range (5 , 10)  , 1f)
-        .SetEase (Ease.OutSine)
-        .OnComplete(()=>{
-          _animator.SetBool ("IsCollide" , false);
-        }); // OutFlash
-        
-
-        // change random line
-        int lOrR = UnityEngine.Random.Range (0,2);
-        Debug.Log (lOrR);
-        if (lOrR == 0) {
-           if (CanMoveLeft()) MoveLeft ();
-           else MoveRight ();
+        // Draw RayCast to check player is behind vehicle
+        if (Physics.Raycast (transform.position, transform.forward, out RaycastHit hitInfo, 1.5f,  carLayerMask)){
+          Debug.Log (hitInfo.transform.gameObject.name);      
+          SoundManager.Instance.PlaySound (SoundManager.SoundClip.CrashSound);
+          _animator.SetBool ("IsCollide" , true);
+          otherTransform.DOMoveZ (otherTransform.position.z + 40f + UnityEngine.Random.Range (5 , 10)  , 1f)
+          .SetEase (Ease.OutSine)
+          .OnComplete(()=>{
+            _animator.SetBool ("IsCollide" , false);
+          }); // OutFlash
+          
+  
+          // change random line
+          int lOrR = UnityEngine.Random.Range (0,2);
+          Debug.Log (lOrR);
+          if (lOrR == 0) {
+             if (CanMoveLeft()) MoveLeft ();
+             else MoveRight ();
+          }
+          else {
+             if (CanMoverRight()) MoveRight ();
+             else MoveLeft();
+          }
+          
+          // decrease speed
+          speed /= 3;
         }
-        else {
-           if (CanMoverRight()) MoveRight ();
-           else MoveLeft();
-        }
-        
-        // decrease speed
-        speed /= 3;
     }
 
     private void SmoothlyLerpSpeed () {

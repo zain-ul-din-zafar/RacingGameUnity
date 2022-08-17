@@ -33,7 +33,7 @@ public class TrafficCar : MonoBehaviour {
 	
 	public float maximumSpeed = 10f;
 	private float _maximumSpeed = 10f;
-	private float desiredSpeed;
+	public float desiredSpeed;
 	public float distance = 0f;
 	private Quaternion steeringAngle = Quaternion.identity;
 
@@ -80,7 +80,7 @@ public class TrafficCar : MonoBehaviour {
 		}
 
 		GameObject triggerColliderGO = new GameObject ("TriggerVolume");
-		triggerColliderGO.transform.position = bodyCollider.bounds.center;
+		triggerColliderGO.transform.position = bodyCollider.bounds.center + new Vector3(0,0,0.11f);
 		triggerColliderGO.transform.rotation = bodyCollider.transform.rotation;
 		triggerColliderGO.transform.SetParent(transform, true);
 		triggerColliderGO.transform.localScale = bodyCollider.transform.localScale;
@@ -217,7 +217,6 @@ public class TrafficCar : MonoBehaviour {
 					brakeLights[i].intensity = 0f;
 				else
 					brakeLights[i].intensity = .3f;
-
 			}
 
 		}
@@ -258,26 +257,28 @@ public class TrafficCar : MonoBehaviour {
 			// desiredSpeed = Mathf.Lerp(desiredSpeed, 0f, Time.fixedDeltaTime);
 		}
 
-        
-        
+        rigid.velocity = transform.forward * desiredSpeed;
+       // rigid.velocity = Vector3.Lerp(rigid.velocity, transform.forward * desiredSpeed, Time.deltaTime * 3f);
+		rigid.angularVelocity = Vector3.Slerp(rigid.angularVelocity, Vector3.zero, Time.deltaTime * 10f);
+
+		//transform.Translate(Vector3.forward * Time.deltaTime * desiredSpeed);
 		if(distance < 50)
 			brakingOn = true;
 		else
 			brakingOn = false;
 
-		rigid.velocity = Vector3.Slerp(rigid.velocity, transform.forward * desiredSpeed, Time.fixedDeltaTime * 3f);
-		rigid.angularVelocity = Vector3.Slerp(rigid.angularVelocity, Vector3.zero, Time.fixedDeltaTime * 10f);
+		
 
 		if(!immobilized){
 
 			switch(changingLines){
 
-			case ChangingLines.Straight:
+			case ChangingLines.Straight: 
 				steeringAngle = Quaternion.identity;
 				break;
 
 			case ChangingLines.Left:
-
+        
 				if(currentLine == 0){
 					changingLines = ChangingLines.Straight;
 					break;
@@ -299,7 +300,7 @@ public class TrafficCar : MonoBehaviour {
 					changingLines = ChangingLines.Straight;
 					break;
 				}
-
+         
 				if(transform.position.x >= TrafficPooling.lines[currentLine + 1].position.x - .5f){
 					currentLine ++;
 					signalsOn = SignalsOn.Off;
@@ -337,6 +338,7 @@ public class TrafficCar : MonoBehaviour {
 		// TrafficCar tc;
 		// col.gameObject.TryGetComponent <TrafficCar>(out tc);
         // tc.desiredSpeed = this.desiredSpeed + Random.Range (2 , 4);
+		changingLines = ChangingLines.Right;		
 	}
     
 	void OnTriggerExit(Collider col){
@@ -349,22 +351,17 @@ public class TrafficCar : MonoBehaviour {
     private static Stack <GameObject> collideHistory = new Stack <GameObject>();
     
 	void OnCollisionEnter(Collision col) {
-
+		
 		if(immobilized || spawnProtection < .5f) return;
         
 		if (col.gameObject.tag == "TrafficCar") {
-			
-			Debug.Log ("Collide");
 			// always add force to car that is next to car which collide with player
 			if (collideHistory.Count == 0)  collideHistory.Push (gameObject); 
              
-			if (col.gameObject == collideHistory.Peek ()) {
-				//Debug.LogError ("Same Car");
-				//Debug.Break();
-				return;
-			}
+			if (col.gameObject == collideHistory.Peek ()) return;
 			
-			DOTween.KillAll();
+			// DOTween.KillAll();
+			PlayerController.Instance?._animator.SetBool ("IsCollide" , false);
 		    col.gameObject.transform.DOMoveZ (transform.position.z + 40f , 1).SetEase (Ease.OutFlash);
 			collideHistory.Push (gameObject);
 		}

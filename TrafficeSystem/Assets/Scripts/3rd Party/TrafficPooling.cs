@@ -188,11 +188,11 @@ public class TrafficPooling : MonoBehaviour {
     
     private void SpawnCleaner () {
      foreach (var powerUp in  _powerUps) 
-	  if(PlayerController.Instance.gameObject.transform.position.z > powerUp.powerUp.transform.position.z + 3f) {
+	  if(PlayerController.Instance.gameObject.transform.position.z > powerUp.powerUp.transform.position.z + 20f) {
 		powerUp.powerUp.SetActive(false);
 	  }
     }
-   
+    
 	private void DestoryAllCarsBehindPlayer () {
 		
 		// use special powers
@@ -201,9 +201,8 @@ public class TrafficPooling : MonoBehaviour {
 		// });
         
        for (int i = 0; i < _trafficCars.Count; i++) {
-			if(PlayerController.Instance.gameObject.transform.position.z > _trafficCars[i].transform.position.z + 3f){
+			if(PlayerController.Instance.gameObject.transform.position.z > _trafficCars[i].transform.position.z + 15f)
 				_trafficCars[i].gameObject.SetActive(false);
-			}
 		}
 	}
     
