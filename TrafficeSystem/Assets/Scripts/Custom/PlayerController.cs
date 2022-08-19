@@ -4,13 +4,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
-
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour {
     
     public static PlayerController Instance {get; private set;}
+    
+    // events
+    public event EventHandler <float> OnHitCoin; 
 
     private CharacterController characterController;
+      
     [SerializeField] private float speed = 6.0f;
     [SerializeField] private Camera _camera;
     [SerializeField] private List<Vector3> lines;
@@ -99,6 +102,8 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool ("IsCollide" , false);
         }
 
+        // if (Input.GetKeyDown(KeyCode.DownArrow)) MoveDown();
+
         GetTouchInput();
         SmoothlyLerpSpeed ();
         AddTouchDelay ();
@@ -160,6 +165,15 @@ public class PlayerController : MonoBehaviour {
         _animator.SetBool("Jump" , true);
         transform.DOMoveY(jumpHeight, jumpTime);
         // vVelocity = jumpSpeed;
+    }
+
+    private void MoveDown () {
+        if (!isJumping) return;
+        isJumping = false;
+        DOTween.KillAll (this.transform);
+        _animator.SetBool ("Idle" , true);
+        _animator.SetBool ("Jump" , false);
+        vVelocity = 0;
     }
 
     [SerializeField] private float minSwipeDistance=50f;// In -> px
@@ -234,9 +248,7 @@ public class PlayerController : MonoBehaviour {
         }
 
         // -> for Y Movement
-        
-        if(yDistance>xDistance)
-        {
+        if(yDistance>xDistance) {
             if (characterController.isGrounded) {
                 _animator.SetBool("Jump" , false);
                 vVelocity = 0;
@@ -259,12 +271,17 @@ public class PlayerController : MonoBehaviour {
         if (tagsToCompare.Contains (other.gameObject.tag)) {
            coins += 1;
            GameManager.Instance.gameState.coins += 1;
+           ParticleSpawnManager.Instance.InstantiateParticle (
+            ParticleSpawnManager.ParticleType.CoinHitEffect,
+            other.gameObject.transform.position
+           );
+           OnHitCoin?.Invoke (this , coins);
            SoundManager.Instance.PlaySound (SoundManager.SoundClip.CoinSound);
            other.gameObject.SetActive (false); 
         }
     }
 
-   private void LateUpdate() =>
+    private void LateUpdate() =>
        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
 
     // Helper Functions
@@ -281,7 +298,7 @@ public class PlayerController : MonoBehaviour {
         
         // Draw RayCast to check player is behind vehicle
         if (Physics.Raycast (transform.position, transform.forward, out RaycastHit hitInfo, 1.5f,  carLayerMask)){
-          Debug.Log (hitInfo.transform.gameObject.name);      
+              
           SoundManager.Instance.PlaySound (SoundManager.SoundClip.CrashSound);
           _animator.SetBool ("IsCollide" , true);
           otherTransform.DOMoveZ (otherTransform.position.z + 40f + UnityEngine.Random.Range (5 , 10)  , 1f)
@@ -290,7 +307,10 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool ("IsCollide" , false);
           }); // OutFlash
           
-  
+          ParticleSpawnManager.Instance.InstantiateParticle (
+            ParticleSpawnManager.ParticleType.HitEffect,
+            hitInfo.point + Vector3.forward * 2f
+          );
           // change random line
           int lOrR = UnityEngine.Random.Range (0,2);
           Debug.Log (lOrR);

@@ -15,7 +15,7 @@ public class TrafficPooling : MonoBehaviour {
 		}
 	}
 	#endregion
-
+    
 	public TrafficType trafficType;
 	private Transform reference;
 
@@ -40,6 +40,7 @@ public class TrafficPooling : MonoBehaviour {
 
 	private List<TrafficCar> _trafficCars = new List<TrafficCar>();
     private List<PowerUps> _powerUps = new List<PowerUps> ();
+	
     private const float SPAWN_DELAY = 10f;
 	private float spawnDelay ;
 
@@ -70,8 +71,8 @@ public class TrafficPooling : MonoBehaviour {
 		for (int i = 0 ; i < powerUps.Count ; i += 1) {
 			for (int j = 0 ; j < powerUps[i].frequence ; j += 1) {
 				var powerUp = Instantiate (powerUps[i].powerUp , Vector3.zero , Quaternion.identity) as GameObject;
-				_powerUps.Add (new PowerUps{powerUp = powerUp , frequence = powerUps[i].frequence });
 				powerUp.SetActive (false);
+				_powerUps.Add (new PowerUps{powerUp = powerUp , frequence = powerUps[i].frequence });
 			}
 		}
 
@@ -95,7 +96,7 @@ public class TrafficPooling : MonoBehaviour {
 			) {
 				spawnDelay -= Time.deltaTime;
 				if (spawnDelay < 0) {
-				 SpawnPowerUps (_powerUps[i].powerUp); 
+				 SpawnPowerUps (_powerUps[i].powerUp ); 
                  spawnDelay = SPAWN_DELAY;
 				}
 			}
@@ -103,16 +104,11 @@ public class TrafficPooling : MonoBehaviour {
 	}
 
     void SpawnPowerUps (GameObject powerUp) {
-	
-    //    if (powerUp.activeSelf) return;
-       
 	   powerUp.SetActive (true);
 	   int randomLine = Random.Range (0 , lines.Length);
        powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y + 1f, reference.transform.position.z + Random.Range(100, 300));
 	}
 	
-    
-
 	void ReAlignTraffic(TrafficCar realignableObject){
 
 		if(!realignableObject.gameObject.activeSelf)
