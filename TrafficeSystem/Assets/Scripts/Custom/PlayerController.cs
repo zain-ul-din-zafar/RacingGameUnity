@@ -15,9 +15,13 @@ public class PlayerController : MonoBehaviour {
     private CharacterController characterController;
       
     [SerializeField] private float speed = 6.0f;
+    [SerializeField] private float boostSpeed = 20f;
+    [SerializeField] private float boostTime = 2f;
+
     [SerializeField] private Camera _camera;
     [SerializeField] private List<Vector3> lines;
     [SerializeField] private float cameraOffSet = 20f;
+    [SerializeField] private float cameraFieldOfViewOnBoost = 60f;
     [SerializeField] private int currentIdx = 1;
     [SerializeField] private float lerpDuration = 0.5f;
 
@@ -27,6 +31,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float gravity = 9.8f;
     [SerializeField] private float jumpHeight = 2f;
     [SerializeField] private float jumpTime = 0.5f;
+    [SerializeField] private float maxSpeed = 150f;
    
     [SerializeField] private Transform meshTransform;
     [SerializeField] private float rayCastDistance = 1.5f;
@@ -37,22 +42,28 @@ public class PlayerController : MonoBehaviour {
     [Space(20)] [Header ("Control Buttons Reference!")]
     [SerializeField] private ButtonController leftBtn;  
     [SerializeField] private ButtonController rightBtn;
-
+   
     private bool isJumping;
     private float vVelocity;
     private Collider characterCollider;
     private float SPEED ;
+    private float _boostTime;
     private bool isDelayTime;
     private float touchDelayTime = 0.2f;
     private float _touchDelayTime;
+    private bool isNitroEffectPlaying;
+    private bool useBoost;
+    private float cameraFieldOfView;
 
     private void Awake() {
         if (Instance) Destroy (this);
         _touchDelayTime = touchDelayTime;
         Instance = this;
-        characterController = GetComponent<CharacterController>();
+        cameraFieldOfView = _camera.fieldOfView;
+        characterController = GetComponent<CharacterController> ();
         characterCollider = GetComponent <CharacterController> ();
         SPEED = speed;
+        _boostTime = boostSpeed;
         transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
         _animator = GetComponentInChildren <Animator> ();
     }
@@ -67,6 +78,7 @@ public class PlayerController : MonoBehaviour {
     private void Update() => CharacterController ();  
     
     private void CharacterController () {
+        speed = Mathf.Clamp (speed, 0f, maxSpeed);
         bool isGrounded = IsGrounded ();
 
         slideTime -= Time.deltaTime;
@@ -107,6 +119,10 @@ public class PlayerController : MonoBehaviour {
         GetTouchInput();
         SmoothlyLerpSpeed ();
         AddTouchDelay ();
+        if (Input.GetKey(KeyCode.LeftShift) || useBoost) NitroEffect ();
+        if (Input.GetKeyUp(KeyCode.LeftShift)) { 
+            DisableNitroEffect();
+        }
     }
     
     private bool IsGrounded () {
@@ -129,7 +145,7 @@ public class PlayerController : MonoBehaviour {
             _touchDelayTime = touchDelayTime;  
             // _animator.SetFloat("Direction" , -1);
             _animator.SetBool("Idle" , false);
-            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.Linear).OnComplete(() => {
                 _animator.SetBool("Idle" , true);
             });
             // rotate in y direction
@@ -144,20 +160,18 @@ public class PlayerController : MonoBehaviour {
         if (CanMoverRight ()) {
             currentIdx += 1;
             _touchDelayTime = touchDelayTime;  
-            // _animator.SetFloat("Direction" , 1);
+            _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle" , false);
-            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.InOutSine).OnComplete(() => {
-                _animator.SetBool("Idle" , true);
+            transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.Linear).OnComplete(() => {
+                // _animator.SetBool("Idle" , true);
             });  
             // rotate in y direction
-            meshTransform.DORotate(new Vector3(0, 45, 0), lerpDuration ).OnComplete(() => {
+            meshTransform.DORotate(new Vector3(0, 55, 0), lerpDuration ).OnComplete(() => {
                 meshTransform.DORotate(new Vector3(0, 0, 0), lerpDuration);
             });
         }
     }
     
-    
-
     private void Jump() {
         if (isJumping) return;
         isJumping = true;
@@ -175,7 +189,32 @@ public class PlayerController : MonoBehaviour {
         _animator.SetBool ("Jump" , false);
         vVelocity = 0;
     }
-
+    
+    private void NitroEffect () {
+      if (!useBoost) return;  
+      if (_boostTime <= 0) {
+        _boostTime  = boostTime;
+        DisableNitroEffect();
+        return;
+      }
+      
+      speed += boostSpeed;
+      isNitroEffectPlaying = true;
+      ParticleSpawnManager.Instance.InstantiateParticle (
+       ParticleSpawnManager.ParticleType.NitroEffect,
+       transform.position,
+       transform
+      );
+      _boostTime -= Time.deltaTime;
+    }
+    
+    private void DisableNitroEffect () {
+        Debug.Log ("Diable");
+        useBoost = false;
+        speed -= boostSpeed;
+        isNitroEffectPlaying = false;
+        ParticleSpawnManager.Instance.DiableParticle (ParticleSpawnManager.ParticleType.NitroEffect);
+    }
     [SerializeField] private float minSwipeDistance=50f;// In -> px
     [SerializeField] private float maxSwipeTime=0.5f;// Max Time Requried to move 
     private float _swipeTime;// Total Swipe Time
@@ -269,20 +308,24 @@ public class PlayerController : MonoBehaviour {
     private int coins = 0;
     private void OnTriggerEnter (Collider other) {
         if (tagsToCompare.Contains (other.gameObject.tag)) {
-           coins += 1;
-           GameManager.Instance.gameState.coins += 1;
-           ParticleSpawnManager.Instance.InstantiateParticle (
-            ParticleSpawnManager.ParticleType.CoinHitEffect,
-            other.gameObject.transform.position
-           );
-           OnHitCoin?.Invoke (this , coins);
-           SoundManager.Instance.PlaySound (SoundManager.SoundClip.CoinSound);
-           other.gameObject.SetActive (false); 
+
+           if (other.gameObject.tag == "Coin"){
+            coins += 1;
+            GameManager.Instance.gameState.coins += 1;
+            OnHitCoin?.Invoke (this , coins);
+            SoundManager.Instance.PlaySound (SoundManager.SoundClip.CoinSound);
+            ParticleSpawnManager.Instance.InstantiateParticle (
+             ParticleSpawnManager.ParticleType.CoinHitEffect,
+             transform.position + transform.forward * 0.5f,
+             transform
+            );
+            other.gameObject.SetActive (false);
+           } else if (other.gameObject.tag == "Booster") {
+             useBoost = true;
+             _boostTime = boostTime;
+           }
         }
     }
-
-    private void LateUpdate() =>
-       _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
 
     // Helper Functions
     private bool CanMoverRight () => currentIdx < lines.Count - 1 && !isDelayTime;
@@ -309,8 +352,9 @@ public class PlayerController : MonoBehaviour {
           
           ParticleSpawnManager.Instance.InstantiateParticle (
             ParticleSpawnManager.ParticleType.HitEffect,
-            hitInfo.point + Vector3.forward * 2f
+            hitInfo.point + Vector3.forward * 5f
           );
+          
           // change random line
           int lOrR = UnityEngine.Random.Range (0,2);
           Debug.Log (lOrR);
@@ -329,9 +373,39 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void SmoothlyLerpSpeed () {
-      float smoothTime = 0.1f;
+      float smoothTime = 0.2f;
       float yVelocity = 0.0f;
       speed = Mathf.SmoothDamp(speed, SPEED, ref yVelocity, smoothTime); 
+    }
+    
+    private float SmoothDampBtwValues (float a , float b , float smoothTime) {
+      float yVelocity = 2f;
+      float result = Mathf.SmoothDamp (a , b , ref yVelocity , smoothTime);
+      return result;
+    }
+
+    // Camera Follow
+    private void LateUpdate()  {
+        // if (isNitroEffectPlaying) 
+        // {
+        //  // smoothly follow player in z direction
+        //  Vector3 target = new Vector3(_camera.transform.position.x, _camera.transform.position.y, transform.position.z -10f);
+        //  _camera.transform.position = Vector3.Lerp(_camera.transform.position, target, Time.deltaTime * 10f);
+        // }
+        // else 
+        // {
+        // //  _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
+        //  _camera.gameObject.transform.position = Vector3.Lerp(_camera.transform.position , new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet) , Time.deltaTime * SmoothFollowFactor); 
+        //  //new Vector3 (_camera.transform.position.x , _camera.transform.position.y , SmoothDampValue (_camera.transform.position.z , new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet) , 1f));
+        // }
+        
+        if (isNitroEffectPlaying) {
+            _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfViewOnBoost, 5 * Time.deltaTime);//SmoothDampValue (_camera.fieldOfView, cameraFieldOfViewOnBoost, 10f * Time.deltaTime);
+        }else {
+            _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfView, Time.deltaTime); // back to normal
+        }
+
+        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
     }
 
     

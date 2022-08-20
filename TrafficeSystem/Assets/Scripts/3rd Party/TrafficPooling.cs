@@ -43,6 +43,8 @@ public class TrafficPooling : MonoBehaviour {
 	
     private const float SPAWN_DELAY = 10f;
 	private float spawnDelay ;
+    
+	private Stack <int> randomLinesHistory = new Stack<int> ();
 
 	void Start () {
 		spawnDelay = SPAWN_DELAY;
@@ -105,8 +107,18 @@ public class TrafficPooling : MonoBehaviour {
 
     void SpawnPowerUps (GameObject powerUp) {
 	   powerUp.SetActive (true);
+       // don't spawn cars on the same line
 	   int randomLine = Random.Range (0 , lines.Length);
-       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y + 1f, reference.transform.position.z + Random.Range(100, 300));
+
+	   if (randomLinesHistory.Count > 0) {
+		while (randomLinesHistory.Peek () == randomLine) {
+			randomLine = Random.Range (0 , lines.Length);
+		}
+		randomLinesHistory.Pop();
+	   }
+
+	   randomLinesHistory.Push (randomLine); // adds new random line to history
+       powerUp.transform.position =  new Vector3(lines[randomLine].position.x, lines[randomLine].position.y + 1.5f, reference.transform.position.z + Random.Range(100, 300));
 	}
 	
 	void ReAlignTraffic(TrafficCar realignableObject){
