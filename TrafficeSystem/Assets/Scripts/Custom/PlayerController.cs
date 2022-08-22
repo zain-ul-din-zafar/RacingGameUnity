@@ -385,9 +385,11 @@ public class PlayerController : MonoBehaviour {
     
     private void DestoryCarOnCollision (Collision other) {
         var otherTransform = other.gameObject.transform;
-        // TODOS: Spawn Particals
-         var spawnPos = new Vector3 (otherTransform.position.x, otherTransform.position.y + 2f, transform.position.z + 1f);
-         ParticleSpawnManager.Instance.InstantiateParticle (ParticleSpawnManager.ParticleType.DestoryEffect, spawnPos, transform);
+        // Spawn Particals
+        var spawnPos = new Vector3 (otherTransform.position.x, otherTransform.position.y + 2f, transform.position.z + 1f);
+        ParticleSpawnManager.Instance.InstantiateParticle (ParticleSpawnManager.ParticleType.DestoryEffect, spawnPos, transform);
+        
+        SoundManager.Instance.PlaySound (SoundManager.SoundClip.DestorySound);
         // otherTransform.DOMoveZ (5, 1f);
         otherTransform.DOMoveY (30, 0.5f);        
     }

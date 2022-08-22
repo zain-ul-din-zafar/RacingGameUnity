@@ -6,7 +6,8 @@ public class SoundManager : MonoBehaviour {
     
     public enum SoundClip {
       CoinSound ,
-      CrashSound
+      CrashSound,
+      DestorySound
     }
 
     public static SoundManager Instance {get; private set;} 

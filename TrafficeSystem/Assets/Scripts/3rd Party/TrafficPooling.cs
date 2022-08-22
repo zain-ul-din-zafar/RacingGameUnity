@@ -46,8 +46,11 @@ public class TrafficPooling : MonoBehaviour {
     
 	private Stack <int> randomLinesHistory = new Stack<int> ();
 	public float yPos;
+    
+	private Stack <int> lastLine;
 
 	void Start () {
+		lastLine = new Stack<int> ();
 		spawnDelay = SPAWN_DELAY;
 		reference = Camera.main.transform;
 		yPos = lines [0].position.y;
@@ -109,9 +112,18 @@ public class TrafficPooling : MonoBehaviour {
 
     void SpawnPowerUps (GameObject powerUp) {
 	   powerUp.SetActive (true);
-       // don't spawn cars on the same line
+       
 	   int randomLine = Random.Range (0 , lines.Length);
+       
+	   // don't spawn cars on the same line
+	   if (lastLine.Count > 0) {
+          while (randomLine == lastLine.Peek()) {
+			randomLine = Random.Range (0, lines.Length);
+		  }
+		  lastLine.Pop();
+	   }
 
+	   lastLine.Push (randomLine);
 	   if (randomLinesHistory.Count > 0) {
 		while (randomLinesHistory.Peek () == randomLine) {
 			randomLine = Random.Range (0 , lines.Length);
@@ -127,7 +139,8 @@ public class TrafficPooling : MonoBehaviour {
 
 		if(!realignableObject.gameObject.activeSelf)
 			realignableObject.gameObject.SetActive(true);
-        
+
+		// don't spawn in same line         
 		int randomLine = Random.Range(0, lines.Length );
 
 		realignableObject.currentLine = randomLine;
