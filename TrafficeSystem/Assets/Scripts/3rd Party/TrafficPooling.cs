@@ -45,10 +45,12 @@ public class TrafficPooling : MonoBehaviour {
 	private float spawnDelay ;
     
 	private Stack <int> randomLinesHistory = new Stack<int> ();
+	public float yPos;
 
 	void Start () {
 		spawnDelay = SPAWN_DELAY;
 		reference = Camera.main.transform;
+		yPos = lines [0].position.y;
 		CreateTraffic();
 	}
 
@@ -125,12 +127,12 @@ public class TrafficPooling : MonoBehaviour {
 
 		if(!realignableObject.gameObject.activeSelf)
 			realignableObject.gameObject.SetActive(true);
-
+        
 		int randomLine = Random.Range(0, lines.Length );
 
 		realignableObject.currentLine = randomLine;
-		realignableObject.transform.position = new Vector3(lines[randomLine].position.x, lines[randomLine].position.y, (reference.transform.position.z + (Random.Range(100, 300))));
-
+		realignableObject.transform.position = new Vector3(lines[randomLine].position.x, yPos, (reference.transform.position.z + (Random.Range(100, 300))));
+        
 		realignableObject.transform.rotation = Quaternion.identity;
 		
 		switch(trafficType){

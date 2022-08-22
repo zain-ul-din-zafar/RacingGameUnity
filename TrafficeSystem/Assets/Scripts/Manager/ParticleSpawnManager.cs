@@ -23,7 +23,8 @@ public class ParticleSpawnManager : MonoBehaviour {
     public enum ParticleType {
         CoinHitEffect,
         HitEffect,
-        NitroEffect 
+        NitroEffect,
+        DestoryEffect 
     }
     
     public static ParticleSpawnManager Instance {get; private set;}
