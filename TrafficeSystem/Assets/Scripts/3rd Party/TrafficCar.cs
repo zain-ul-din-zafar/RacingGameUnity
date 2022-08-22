@@ -364,8 +364,9 @@ public class TrafficCar : MonoBehaviour {
 			if (col.gameObject == collideHistory.Peek ()) return;
 			
 			// DOTween.KillAll();
+			Debug.Log ("Trigger");
 			PlayerController.Instance?._animator.SetBool ("IsCollide" , false);
-		    col.gameObject.transform.DOMoveZ (transform.position.z + 40f , 1).SetEase (Ease.OutFlash);
+		    col.gameObject.transform.DOMoveZ (transform.position.z + 100f , 1).SetEase (Ease.OutFlash);
 			collideHistory.Push (gameObject);
 		}
         
@@ -374,12 +375,10 @@ public class TrafficCar : MonoBehaviour {
 	}
    
     private void OnCollisionExit (Collision col) {
-		if (col.gameObject.tag == "TrafficCar" && collideHistory.Peek() == gameObject)
-			collideHistory.Pop ();		
+		if (col.gameObject.tag == "TrafficCar" && collideHistory.Peek() == gameObject && collideHistory.Count > 0) collideHistory.Pop ();		
 	}
 
 	void OnReAligned(){
-
 		immobilized = false;
 		spawnProtection = 0f;
 		rigid.velocity = Vector3.zero;
@@ -390,16 +389,13 @@ public class TrafficCar : MonoBehaviour {
 		distance = 50f;
 	}
 
-	void SpeedUp(){
-		distance = 50f;
-	}
+	void SpeedUp() { distance = 50f; }
 
 	void ChangeLines(){
-		if(changingLines == ChangingLines.Left || changingLines == ChangingLines.Right)
-			return;
-        
+		if(changingLines == ChangingLines.Left || changingLines == ChangingLines.Right) return;
 		int randomNumber = Random.Range(0, 2);
 		changingLines = randomNumber == 0 ? ChangingLines.Left : ChangingLines.Right;
 	}
 
 }
+
