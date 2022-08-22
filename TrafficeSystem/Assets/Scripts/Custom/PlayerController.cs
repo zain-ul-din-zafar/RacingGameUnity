@@ -160,7 +160,7 @@ public class PlayerController : MonoBehaviour {
         if (CanMoverRight ()) {
             currentIdx += 1;
             _touchDelayTime = touchDelayTime;  
-            _animator.SetFloat("Direction" , 1);
+            // _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle" , false);
             transform.DOMoveX(lines[currentIdx].x , lerpDuration).SetEase(Ease.Linear).OnComplete(() => {
                 // _animator.SetBool("Idle" , true);
@@ -328,6 +328,11 @@ public class PlayerController : MonoBehaviour {
            } else if (other.gameObject.tag == "Booster") {
              useBoost = true;
              _boostTime = boostTime;
+             ParticleSpawnManager.Instance.InstantiateParticle (
+                ParticleSpawnManager.ParticleType.BoostPickUpEffect,
+                transform.position + transform.forward * 0.5f,
+                transform
+             );
            }
         }
     }
@@ -348,6 +353,7 @@ public class PlayerController : MonoBehaviour {
         if (Physics.Raycast (transform.position, transform.forward, out RaycastHit hitInfo, 1.5f,  carLayerMask)){
               
           SoundManager.Instance.PlaySound (SoundManager.SoundClip.CrashSound);
+          StressReceiver.Instance.InduceStress(0.5f);
           _animator.SetBool ("IsCollide" , true);
           otherTransform.DOMoveZ (otherTransform.position.z + 40f + UnityEngine.Random.Range (5 , 10)  , 1f)
           .SetEase (Ease.OutSine)
@@ -355,44 +361,41 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool ("IsCollide" , false);
           }); // OutFlash
           
-        //   ParticleSpawnManager.Instance.InstantiateParticle (
-        //     ParticleSpawnManager.ParticleType.HitEffect,
-        //     hitInfo.point + Vector3.forward * 5f,
-        //     hitInfo.collider.gameObject.transform
-        //   );
           ParticleSpawnManager.Instance.InstantiateParticle (
             ParticleSpawnManager.ParticleType.HitEffect,
             transform.position,
-            hitInfo.collider.gameObject.transform
+            transform
           );
 
           // change random line
           int lOrR = UnityEngine.Random.Range (0,2);
           Debug.Log (lOrR);
           if (lOrR == 0) {
-             if (CanMoveLeft()) MoveLeft ();
-             else MoveRight ();
+             if (CanMoveLeft()) 
+               MoveLeft ();
+             else 
+               MoveRight ();
           }
           else {
-             if (CanMoverRight()) MoveRight ();
-             else MoveLeft();
+             if (CanMoverRight()) 
+               MoveRight ();
+             else 
+               MoveLeft();
           }
           
-          // decrease speed
-          speed /= 3;
+          speed /= 2;
         }
     }
     
     private void DestoryCarOnCollision (Collision other) {
         var otherTransform = other.gameObject.transform;
-        // Spawn Particals
         var spawnPos = new Vector3 (otherTransform.position.x, otherTransform.position.y + 2f, transform.position.z + 1f);
         ParticleSpawnManager.Instance.InstantiateParticle (ParticleSpawnManager.ParticleType.DestoryEffect, spawnPos, transform);
-        
+        StressReceiver.Instance.InduceStress(0.5f);
         SoundManager.Instance.PlaySound (SoundManager.SoundClip.DestorySound);
-        // otherTransform.DOMoveZ (5, 1f);
-        otherTransform.DOMoveY (30, 0.5f);        
+        otherTransform.DOMoveY (30, 0.3f);        
     }
+
     private void SmoothlyLerpSpeed () {
       float smoothTime = 0.2f;
       float yVelocity = 0.0f;
