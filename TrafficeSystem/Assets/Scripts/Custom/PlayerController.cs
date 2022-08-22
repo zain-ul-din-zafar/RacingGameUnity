@@ -198,7 +198,7 @@ public class PlayerController : MonoBehaviour {
         return;
       }
       
-      speed += boostSpeed;
+      if (!isNitroEffectPlaying) speed += boostSpeed;
       isNitroEffectPlaying = true;
       ParticleSpawnManager.Instance.InstantiateParticle (
        ParticleSpawnManager.ParticleType.NitroEffect,
@@ -302,9 +302,14 @@ public class PlayerController : MonoBehaviour {
     }// <- Swipe control
 
     private void OnCollisionEnter (Collision other) {
-        if (other.gameObject.tag == "TrafficCar") HandleCarCollision (other);
+        if (other.gameObject.tag == "TrafficCar") {
+            if(useBoost)
+             DestoryCarOnCollision (other);
+            else
+             HandleCarCollision (other);
+        }
     }
- 
+    
     private int coins = 0;
     private void OnTriggerEnter (Collider other) {
         if (tagsToCompare.Contains (other.gameObject.tag)) {
@@ -350,11 +355,17 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool ("IsCollide" , false);
           }); // OutFlash
           
+        //   ParticleSpawnManager.Instance.InstantiateParticle (
+        //     ParticleSpawnManager.ParticleType.HitEffect,
+        //     hitInfo.point + Vector3.forward * 5f,
+        //     hitInfo.collider.gameObject.transform
+        //   );
           ParticleSpawnManager.Instance.InstantiateParticle (
             ParticleSpawnManager.ParticleType.HitEffect,
-            hitInfo.point + Vector3.forward * 5f
+            transform.position,
+            hitInfo.collider.gameObject.transform
           );
-          
+
           // change random line
           int lOrR = UnityEngine.Random.Range (0,2);
           Debug.Log (lOrR);
@@ -371,7 +382,15 @@ public class PlayerController : MonoBehaviour {
           speed /= 3;
         }
     }
-
+    
+    private void DestoryCarOnCollision (Collision other) {
+        var otherTransform = other.gameObject.transform;
+        // TODOS: Spawn Particals
+         var spawnPos = new Vector3 (otherTransform.position.x, otherTransform.position.y + 2f, transform.position.z + 1f);
+         ParticleSpawnManager.Instance.InstantiateParticle (ParticleSpawnManager.ParticleType.DestoryEffect, spawnPos, transform);
+        // otherTransform.DOMoveZ (5, 1f);
+        otherTransform.DOMoveY (30, 0.5f);        
+    }
     private void SmoothlyLerpSpeed () {
       float smoothTime = 0.2f;
       float yVelocity = 0.0f;

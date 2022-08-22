@@ -234,6 +234,9 @@ public class TrafficCar : MonoBehaviour {
 
 	void FixedUpdate(){
         
+		// stick to the ground
+		// var pos = transform.position;
+		// transform.position = new Vector3 (pos.x, TrafficPooling.Instance.yPos, pos.z);
 		desiredSpeed = Mathf.Clamp(
 			maximumSpeed - Mathf.Lerp(maximumSpeed, 0f, (distance - 10f) / 30f),
 			(maximumSpeed * (float)(50f / 100f)), // BY :- totalVal * (percentage/100); 
