@@ -2,6 +2,6 @@
 
 public class Init : MonoBehaviour {
     private void Awake () {
-        Application.targetFrameRate = 300;
+        Application.targetFrameRate = 3000;
     }
 }

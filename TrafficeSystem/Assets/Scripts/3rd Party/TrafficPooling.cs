@@ -176,14 +176,10 @@ public class TrafficPooling : MonoBehaviour {
 	bool CheckIfClipping(BoxCollider trafficCarBound){
          
 		for (int i = 0; i < _trafficCars.Count; i++) {
-
 			if(!trafficCarBound.transform.IsChildOf(_trafficCars[i].transform) && _trafficCars[i].gameObject.activeSelf){
-				
 				if(ContainBounds(trafficCarBound.transform, trafficCarBound.bounds, _trafficCars[i].triggerCollider.bounds))
 					return true;
-
 			}
-			
 		}
 
 		return false;
@@ -229,5 +225,17 @@ public class TrafficPooling : MonoBehaviour {
 		}
 	}
     
-    
+    /// APIS
+	public bool AnyOf (GameObject objToCompare, System.Func <GameObject, GameObject, bool> compareAction) {
+      foreach (var car in  _trafficCars)
+	    if (compareAction (objToCompare, car.gameObject)) return true;
+	  return false;
+	}
+
+	public Transform AnyOf (GameObject objToCompare, System.Func <GameObject, GameObject, Transform> compareAction) {
+      foreach (var car in  _trafficCars)
+	    if (compareAction (objToCompare, car.gameObject)) return car.gameObject.transform;
+	  return null;
+	}
+
 }

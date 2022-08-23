@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour {
     
     // events
     public event EventHandler <float> OnHitCoin; 
+    public event EventHandler <float> OnEnergyChange;
 
     private CharacterController characterController;
       
@@ -42,10 +43,9 @@ public class PlayerController : MonoBehaviour {
     [Space(20)] [Header ("Control Buttons Reference!")]
     [SerializeField] private ButtonController leftBtn;  
     [SerializeField] private ButtonController rightBtn;
-   
+    
     private bool isJumping;
     private float vVelocity;
-    private Collider characterCollider;
     private float SPEED ;
     private float _boostTime;
     private bool isDelayTime;
@@ -54,6 +54,9 @@ public class PlayerController : MonoBehaviour {
     private bool isNitroEffectPlaying;
     private bool useBoost;
     private float cameraFieldOfView;
+    
+    [SerializeField] private float energyDecrementEach2Sec = 5f;
+    private float playerEnergy;
 
     private void Awake() {
         if (Instance) Destroy (this);
@@ -61,17 +64,19 @@ public class PlayerController : MonoBehaviour {
         Instance = this;
         cameraFieldOfView = _camera.fieldOfView;
         characterController = GetComponent<CharacterController> ();
-        characterCollider = GetComponent <CharacterController> ();
         SPEED = speed;
         _boostTime = boostSpeed;
         transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
         _animator = GetComponentInChildren <Animator> ();
+        playerEnergy = 100;
     }
 
     private IEnumerator Start() {
         while (true) {
             yield return new WaitForSeconds(5f);
             speed += Time.deltaTime;
+            playerEnergy -= energyDecrementEach2Sec;
+            OnEnergyChange?.Invoke (this, playerEnergy);
         }
     }
     
@@ -227,7 +232,6 @@ public class PlayerController : MonoBehaviour {
     private Vector2 _startSwipePos;// Swipe Start pos
     private Vector2 _endSwipePos;// End pos
     
-    
     private void GetTouchInput() {
        
        #if UNITY_EDITOR || UNITY_EDITOR_WIN  // if unity editor
@@ -333,6 +337,20 @@ public class PlayerController : MonoBehaviour {
                 transform.position + transform.forward * 0.5f,
                 transform
              );
+             other.gameObject.SetActive(false);
+           }
+           else if (other.gameObject.tag == "Energy") {
+            playerEnergy = 100;
+            OnEnergyChange?.Invoke (this, playerEnergy);
+            ParticleSpawnManager.Instance.InstantiateParticle (
+                ParticleSpawnManager.ParticleType.EnergyPickUpEffect,
+                transform.position + transform.forward * 0.5f,
+                transform
+            );
+            other.gameObject.SetActive (false);
+           }
+           else if (other.gameObject.tag == "Magnet") {
+            other.gameObject.SetActive (false);
            }
         }
     }

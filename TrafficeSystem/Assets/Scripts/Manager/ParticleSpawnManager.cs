@@ -25,7 +25,8 @@ public class ParticleSpawnManager : MonoBehaviour {
         HitEffect,
         NitroEffect,
         DestoryEffect,
-        BoostPickUpEffect 
+        BoostPickUpEffect ,
+        EnergyPickUpEffect
     }
     
     public static ParticleSpawnManager Instance {get; private set;}
