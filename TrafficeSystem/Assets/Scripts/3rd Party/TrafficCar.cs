@@ -118,8 +118,10 @@ public class TrafficCar : MonoBehaviour {
 	
 	void Start(){
 
-		InvokeRepeating("SpeedUp", 4f, 4f);
-		InvokeRepeating("ChangeLines", Random.Range(15, 45), Random.Range(15, 45));
+		signalsOn = SignalsOn.Off; 
+		// start at 4 sec and repeat after every 4 second
+		InvokeRepeating("SpeedUp", 4f, 10f);
+		InvokeRepeating("ChangeLines", Random.Range(15, 45), Random.Range(10, 45)); // start at 15 sec && repeat after each 45 sec
 
 		for (int i = 0; i < headLights.Length; i++) {
 
@@ -156,9 +158,7 @@ public class TrafficCar : MonoBehaviour {
 
 		for (int i = 0; i < signalLights.Length; i++) {
 
-			if(signalsOn == SignalsOn.Off){
-				signalLights[i].intensity = 0f;
-			}
+			if(signalsOn == SignalsOn.Off){ signalLights[i].intensity = 0f; }
 
 			if(signalsOn == SignalsOn.Left){
 				if(signalTimer >= .5f){
@@ -292,7 +292,8 @@ public class TrafficCar : MonoBehaviour {
 					signalsOn = SignalsOn.Off;
 					changingLines = ChangingLines.Straight;
 				}else{
-					steeringAngle = Quaternion.identity * Quaternion.Euler(0f, -5f, 0f);
+					// steeringAngle = Quaternion.identity * Quaternion.Euler(0f, -5f, 0f);
+					transform.DOMoveX (TrafficPooling.lines[currentLine - 1].position.x, 1.5f);
 					signalsOn = SignalsOn.Left;
 				}
 				break;
@@ -309,7 +310,8 @@ public class TrafficCar : MonoBehaviour {
 					signalsOn = SignalsOn.Off;
 					changingLines = ChangingLines.Straight;
 				}else{
-					steeringAngle = Quaternion.identity * Quaternion.Euler(0f, 5f, 0f);
+					transform.DOMoveX (TrafficPooling.lines[currentLine + 1].position.x, 1.5f);
+					// steeringAngle = Quaternion.identity * Quaternion.Euler(0f, 5f, 0f);
 					signalsOn = SignalsOn.Right;
 				}
 				break;
@@ -322,60 +324,103 @@ public class TrafficCar : MonoBehaviour {
    
     
 
+	// void OnTriggerStay(Collider col){
+
+	// 	// if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value || col.isTrigger)
+	// 	// 	return;
+
+	// 	if (!col.CompareTag ("TrafficCar")) return;
+        
+	// 	// Debug.Log ("Collide Stay!!");
+
+	// 	// // Keep Distance From other cars
+	// 	// if(transform.position.z > col.transform.position.z)
+	// 	// 	transform.DOMoveZ (col.transform.position.z + 1f, .5f);
+
+	// 	// Debug.Log ("Trigger Cars");
+	// 	// col.gameObject.transform.DOMoveZ (transform.position.z + 50f , 1).SetEase (Ease.OutFlash);
+	// 	// distance = Vector3.Distance(transform.position, col.transform.position);
+	// 	// TrafficCar tc;
+	// 	// col.gameObject.TryGetComponent <TrafficCar>(out tc);
+    //     // tc.desiredSpeed = this.desiredSpeed + Random.Range (2 , 4);
+	// 	changingLines = ChangingLines.Right;		
+	// }
+    
+	// void OnTriggerExit(Collider col){
+
+        
+	// 	if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value) return;
+        
+	// }
+   
+    // private static Stack <GameObject> collideHistory = new Stack <GameObject>();
+    
+	// void OnCollisionEnter(Collision col) {
+		
+	// 	if(immobilized || spawnProtection < .5f) return;
+        
+	// 	if (col.gameObject.tag == "TrafficCar") {
+	// 		// always add force to car that is next to car which collide with player
+	// 		if (collideHistory.Count == 0)  collideHistory.Push (gameObject); 
+             
+	// 		if (col.gameObject == collideHistory.Peek ()) return;
+			
+	// 		// DOTween.KillAll();
+	// 		Debug.Log ("Trigger");
+	// 		PlayerController.Instance?._animator.SetBool ("IsCollide" , false);
+	// 	    col.gameObject.transform.DOMoveZ (transform.position.z + 100f , 1).SetEase (Ease.OutFlash);
+	// 		collideHistory.Push (gameObject);
+	// 	}
+        
+	// 	// immobilized = true;
+	// 	// signalsOn = SignalsOn.All;
+	// }
+   
+    // private void OnCollisionExit (Collision col) {
+	// 	if (col.gameObject.tag == "TrafficCar" && collideHistory.Peek() == gameObject && collideHistory.Count > 0) collideHistory.Pop ();		
+	// }
+
+	// void OnReAligned(){
+	// 	immobilized = false;
+	// 	spawnProtection = 0f;
+	// 	rigid.velocity = Vector3.zero;
+	// 	rigid.angularVelocity = Vector3.zero;
+	// 	signalsOn = SignalsOn.Off;
+	// 	changingLines = ChangingLines.Straight;
+	// 	maximumSpeed = Random.Range(_maximumSpeed, _maximumSpeed * 1.5f);
+	// 	distance = 50f;
+	// }
+
+	// void SpeedUp() { distance = 50f; }
+
+	// void ChangeLines(){
+	// 	if(changingLines == ChangingLines.Left || changingLines == ChangingLines.Right) return;
+	// 	int randomNumber = Random.Range(0, 2);
+	// 	changingLines = randomNumber == 0 ? ChangingLines.Left : ChangingLines.Right;
+	// }
+     
 	void OnTriggerStay(Collider col){
 
-		// if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value || col.isTrigger)
+		// if((1 << col.gameObject.layer) != HR_HighwayRacerProperties.Instance.trafficCarsLayer.value || col.isTrigger)
 		// 	return;
-
-		if (!col.CompareTag ("TrafficCar")) return;
-        
-		// Debug.Log ("Collide Stay!!");
-
-		// // Keep Distance From other cars
-		// if(transform.position.z > col.transform.position.z)
-		// 	transform.DOMoveZ (col.transform.position.z + 1f, .5f);
-
-		// Debug.Log ("Trigger Cars");
-		// col.gameObject.transform.DOMoveZ (transform.position.z + 50f , 1).SetEase (Ease.OutFlash);
-		// distance = Vector3.Distance(transform.position, col.transform.position);
-		// TrafficCar tc;
-		// col.gameObject.TryGetComponent <TrafficCar>(out tc);
-        // tc.desiredSpeed = this.desiredSpeed + Random.Range (2 , 4);
-		changingLines = ChangingLines.Right;		
+        if (!col.CompareTag ("TrafficCar")) return;
+		distance = Vector3.Distance(transform.position, col.transform.position);
 	}
-    
+
 	void OnTriggerExit(Collider col){
 
-        
-		if((1 << col.gameObject.layer) != HighwayRacerProperties.Instance.trafficCarsLayer.value) return;
-        
+		// if((1 << col.gameObject.layer) != HR_HighwayRacerProperties.Instance.trafficCarsLayer.value)
+		// 	return;
+
 	}
-   
-    private static Stack <GameObject> collideHistory = new Stack <GameObject>();
-    
-	void OnCollisionEnter(Collision col) {
-		
-		if(immobilized || spawnProtection < .5f) return;
-        
-		if (col.gameObject.tag == "TrafficCar") {
-			// always add force to car that is next to car which collide with player
-			if (collideHistory.Count == 0)  collideHistory.Push (gameObject); 
-             
-			if (col.gameObject == collideHistory.Peek ()) return;
-			
-			// DOTween.KillAll();
-			Debug.Log ("Trigger");
-			PlayerController.Instance?._animator.SetBool ("IsCollide" , false);
-		    col.gameObject.transform.DOMoveZ (transform.position.z + 100f , 1).SetEase (Ease.OutFlash);
-			collideHistory.Push (gameObject);
-		}
-        
-		// immobilized = true;
+
+	void OnCollisionEnter(Collision col){
+
+		if(immobilized || spawnProtection < .5f)
+			return;
+
+		immobilized = true;
 		// signalsOn = SignalsOn.All;
-	}
-   
-    private void OnCollisionExit (Collision col) {
-		if (col.gameObject.tag == "TrafficCar" && collideHistory.Peek() == gameObject && collideHistory.Count > 0) collideHistory.Pop ();		
 	}
 
 	void OnReAligned(){
@@ -389,13 +434,13 @@ public class TrafficCar : MonoBehaviour {
 		distance = 50f;
 	}
 
-	void SpeedUp() { distance = 50f; }
+	void SpeedUp(){ distance = 50f; }
 
 	void ChangeLines(){
 		if(changingLines == ChangingLines.Left || changingLines == ChangingLines.Right) return;
 		int randomNumber = Random.Range(0, 2);
 		changingLines = randomNumber == 0 ? ChangingLines.Left : ChangingLines.Right;
-	}
-
+	} 
 }
+
 

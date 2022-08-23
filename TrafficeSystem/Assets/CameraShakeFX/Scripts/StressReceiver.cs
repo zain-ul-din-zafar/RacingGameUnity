@@ -12,11 +12,9 @@ public class StressReceiver : MonoBehaviour
     public Vector3 MaximumAngularShake = Vector3.one * 5;
     [Tooltip("Maximum translation that the gameobject can receive when applying the shake effect.")]
     public Vector3 MaximumTranslationShake = Vector3.one * .75f;
-  
-
-    private void Awake () {
-      Instance = this;
-    }
+    
+    internal float _stressTimeOut;
+    private void Awake () { Instance = this; }
     private void Update()
     {
         float shake = Mathf.Pow(_trauma, TraumaExponent);
@@ -51,14 +49,17 @@ public class StressReceiver : MonoBehaviour
             _lastPosition = Vector3.zero;
             _lastRotation = Vector3.zero;
         }
+
+        if (_stressTimeOut >= 0) _stressTimeOut -= Time.deltaTime;
     }
 
     /// <summary>
     ///  Applies a stress value to the current object.
     /// </summary>
     /// <param name="Stress">[0,1] Amount of stress to apply to the object</param>
-    public void InduceStress(float Stress)
-    {
+    public void InduceStress(float Stress) {
+        if (_stressTimeOut > 0) return; // wait for compelete 
+        _stressTimeOut = Stress;
         _trauma = Mathf.Clamp01(_trauma + Stress);
     }
 }
