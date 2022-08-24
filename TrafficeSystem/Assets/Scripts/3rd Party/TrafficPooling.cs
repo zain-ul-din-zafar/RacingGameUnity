@@ -213,16 +213,16 @@ public class TrafficPooling : MonoBehaviour {
     }
     
 	private void DestoryAllCarsBehindPlayer () {
-		
+		return;
 		// use special powers
 		// Utilities.QuickSort <TrafficCar> (0 , _trafficCars.Count - 1 , ref _trafficCars , (TrafficCar lhs , TrafficCar rhs)=>{
 		// 	return lhs.gameObject.transform.position.z < rhs.gameObject.transform.position.z;
 		// });
         
-       for (int i = 0; i < _trafficCars.Count; i++) {
-			if(PlayerController.Instance.gameObject.transform.position.z > _trafficCars[i].transform.position.z + 15f)
-				_trafficCars[i].gameObject.SetActive(false);
-		}
+    //    for (int i = 0; i < _trafficCars.Count; i++) {
+	// 		if(PlayerController.Instance.gameObject.transform.position.z > _trafficCars[i].transform.position.z + 15f)
+	// 			_trafficCars[i].gameObject.SetActive(false);
+	// 	}
 	}
     
     /// APIS
@@ -236,6 +236,20 @@ public class TrafficPooling : MonoBehaviour {
       foreach (var car in  _trafficCars)
 	    if (compareAction (objToCompare, car.gameObject)) return car.gameObject.transform;
 	  return null;
+	}
+   
+    /// <summary>
+    /// IfAnyOfpowerUps => void
+	/// Params : Transform objToCompare, Action <Transform,Transform,Transform> compareAction, Action action
+    /// CallBack : compareAction (Transform objToCompare , Transform listItem) =>  boolean  
+    /// </summary>
+    public void IfAnyOfpowerUps (
+  	 Transform objToCompare,
+     System.Func<Transform, Transform, bool> compareAction,
+	 System.Action<Transform> action
+	) {
+		foreach (var powerUp in _powerUps) 
+		  if (compareAction (objToCompare, powerUp.powerUp.transform)) action(powerUp.powerUp.transform);
 	}
 
 }

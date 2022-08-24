@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using RandomsUtilities;
 
 [RequireComponent(typeof (CharacterController))]
 public class PlayerController : MonoBehaviour {
@@ -19,10 +20,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float boostSpeed = 20f;
     [SerializeField] private float boostTime = 2f;
 
-    [SerializeField] private Camera _camera;
     [SerializeField] private List<Vector3> lines;
-    [SerializeField] private float cameraOffSet = 20f;
-    [SerializeField] private float cameraFieldOfViewOnBoost = 60f;
     [SerializeField] private int currentIdx = 1;
     [SerializeField] private float lerpDuration = 0.5f;
 
@@ -51,21 +49,23 @@ public class PlayerController : MonoBehaviour {
     private bool isDelayTime;
     private float touchDelayTime = 0.2f;
     private float _touchDelayTime;
-    private bool isNitroEffectPlaying;
+    public bool isNitroEffectPlaying;
     private bool useBoost;
-    private float cameraFieldOfView;
     
     [SerializeField] private float energyDecrementEach2Sec = 5f;
+    [SerializeField] private float magnetEffectTime = 5f;
     private float playerEnergy;
-
+    private float  _magnetEffectTime;
     private void Awake() {
         if (Instance) Destroy (this);
         _touchDelayTime = touchDelayTime;
         Instance = this;
-        cameraFieldOfView = _camera.fieldOfView;
         characterController = GetComponent<CharacterController> ();
         SPEED = speed;
         _boostTime = boostSpeed;
+        _magnetEffectTime = magnetEffectTime;
+        magnetTurnOffAction = new Utilities.ActionHandler ();
+        magnetEffectTime = 0;
         transform.position = new Vector3(lines[currentIdx].x  , transform.position.y , transform.position.z);
         _animator = GetComponentInChildren <Animator> ();
         playerEnergy = 100;
@@ -124,6 +124,7 @@ public class PlayerController : MonoBehaviour {
         GetTouchInput();
         SmoothlyLerpSpeed ();
         AddTouchDelay ();
+        MagnetEffect ();
         if (Input.GetKey(KeyCode.LeftShift) || useBoost) NitroEffect ();
         if (Input.GetKeyUp(KeyCode.LeftShift)) { 
             DisableNitroEffect();
@@ -132,7 +133,9 @@ public class PlayerController : MonoBehaviour {
     
     private bool IsGrounded () {
         if (Physics.Raycast (transform.position , Vector3.down , out RaycastHit hitInfo , rayCastDistance , groundLayer)){   
-            Debug.DrawLine (transform.position , hitInfo.point , Color.black);// !debug
+            #if UNITY_EDITOR
+             Debug.DrawLine (transform.position , hitInfo.point , Color.black);// !debug
+            #endif
             return true;
         }
         return false;
@@ -210,11 +213,11 @@ public class PlayerController : MonoBehaviour {
        transform.position,
        transform
       );
+      
       _boostTime -= Time.deltaTime;
     }
     
     private void DisableNitroEffect () {
-        Debug.Log ("Diable");
         useBoost = false;
         speed -= boostSpeed;
         isNitroEffectPlaying = false;
@@ -338,6 +341,7 @@ public class PlayerController : MonoBehaviour {
                 transform
              );
              other.gameObject.SetActive(false);
+            //  StressReceiver.Instance.InduceStress (boostTime);
            }
            else if (other.gameObject.tag == "Energy") {
             playerEnergy = 100;
@@ -351,6 +355,13 @@ public class PlayerController : MonoBehaviour {
            }
            else if (other.gameObject.tag == "Magnet") {
             other.gameObject.SetActive (false);
+            magnetEffectTime = _magnetEffectTime;
+            ParticleSpawnManager.Instance.InstantiateParticle (
+             ParticleSpawnManager.ParticleType.MagnetEffect,
+             transform.position + Vector3.up * 0.5f + Vector3.forward * 0.3f,
+             transform
+            );
+            magnetTurnOffAction.canInvokeAction = true;
            }
         }
     }
@@ -387,7 +398,7 @@ public class PlayerController : MonoBehaviour {
 
           // change random line
           int lOrR = UnityEngine.Random.Range (0,2);
-          Debug.Log (lOrR);
+         
           if (lOrR == 0) {
              if (CanMoveLeft()) 
                MoveLeft ();
@@ -420,38 +431,38 @@ public class PlayerController : MonoBehaviour {
       speed = Mathf.SmoothDamp(speed, SPEED, ref yVelocity, smoothTime); 
     }
     
-    private float SmoothDampBtwValues (float a , float b , float smoothTime) {
+    private static float SmoothDampBtwValues (float a , float b , float smoothTime) {
       float yVelocity = 2f;
       float result = Mathf.SmoothDamp (a , b , ref yVelocity , smoothTime);
       return result;
     }
+    
+    internal Utilities.ActionHandler magnetTurnOffAction;
 
-    // Camera Follow
-    private void LateUpdate()  {
-        // if (isNitroEffectPlaying) 
-        // {
-        //  // smoothly follow player in z direction
-        //  Vector3 target = new Vector3(_camera.transform.position.x, _camera.transform.position.y, transform.position.z -10f);
-        //  _camera.transform.position = Vector3.Lerp(_camera.transform.position, target, Time.deltaTime * 10f);
-        // }
-        // else 
-        // {
-        // //  _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
-        //  _camera.gameObject.transform.position = Vector3.Lerp(_camera.transform.position , new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet) , Time.deltaTime * SmoothFollowFactor); 
-        //  //new Vector3 (_camera.transform.position.x , _camera.transform.position.y , SmoothDampValue (_camera.transform.position.z , new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet) , 1f));
-        // }
+    private void MagnetEffect () {
+        if (magnetEffectTime <= 0) return;
         
-        if (isNitroEffectPlaying) {
-            _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfViewOnBoost, 5 * Time.deltaTime);//SmoothDampValue (_camera.fieldOfView, cameraFieldOfViewOnBoost, 10f * Time.deltaTime);
-        }else {
-            _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfView, Time.deltaTime); // back to normal
+        magnetEffectTime -= Time.deltaTime;
+        if (magnetEffectTime < 1f) {
+            magnetTurnOffAction.PlayOneShot (()=>{
+                ParticleSpawnManager.Instance.DiableParticle (ParticleSpawnManager.ParticleType.MagnetEffect);
+            });
+            magnetTurnOffAction.canInvokeAction = false;
         }
 
-        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x , _camera.transform.position.y, transform.position.z - cameraOffSet);
+        TrafficPooling.Instance.IfAnyOfpowerUps (transform, (Transform player, Transform powerUp)=> {
+            float megnetFieldRange = player.position.z + 25f;
+            float powerUpPosZ = powerUp.position.z;
+            return powerUpPosZ <= megnetFieldRange && player.position.z < powerUpPosZ + 5f;
+        },(Transform powerUp)=>{
+            // Move PowerUp Towards Player
+            powerUp.DOMove (this.transform.position, 0.3f);
+        });
     }
 
-    
+    public float BoostTime () => _boostTime;
 }
+
 
 
 
