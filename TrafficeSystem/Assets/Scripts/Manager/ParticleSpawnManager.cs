@@ -26,7 +26,8 @@ public class ParticleSpawnManager : MonoBehaviour {
         NitroEffect,
         DestoryEffect,
         BoostPickUpEffect ,
-        EnergyPickUpEffect
+        EnergyPickUpEffect,
+        MagnetEffect
     }
     
     public static ParticleSpawnManager Instance {get; private set;}
@@ -41,7 +42,6 @@ public class ParticleSpawnManager : MonoBehaviour {
         foreach (ParticleType particleType in System.Enum.GetValues (typeof (ParticleType))) {
            var loadedParticle = Resources.Load <GameObject> (PATH + particleType.ToString());
            var particle = Instantiate (loadedParticle);
-           Debug.Log (Quaternion.identity);
            particlesDictionary [particleType] = particle;
            particle.GetComponent <ParticleSystem>().Stop();
         }

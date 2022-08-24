@@ -14,8 +14,6 @@ namespace RandomsUtilities {
         return Vector3.Dot(toTarget, player.transform.forward) > 0; // GameObject is in the front of player
     }
     
-    
-
     /// <summary>
     /// Quick Sort
     /// CallBack : Action (T lhs , T rhs) => bool | USAGE :- lhs < rhs
@@ -44,9 +42,19 @@ namespace RandomsUtilities {
       QuickSort<T> (right + 1, lastIdx, ref list, callBack);
     }
     
+
+
+    public class ActionHandler {
+      public ActionHandler () { canInvokeAction = false; }
+      public bool canInvokeAction ;
+      public void PlayOneShot (Action action) { 
+        if (!canInvokeAction) return;
+        action (); 
+      }
+    }
+
+
   }
-  
-  
   
 }
 
