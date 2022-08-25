@@ -24,10 +24,11 @@ public class ParticleSpawnManager : MonoBehaviour {
         CoinHitEffect,
         HitEffect,
         NitroEffect,
-        DestoryEffect,
+        DestroyEffect,
         BoostPickUpEffect ,
         EnergyPickUpEffect,
-        MagnetEffect
+        MagnetEffect,
+        ShieldEffect
     }
     
     public static ParticleSpawnManager Instance {get; private set;}

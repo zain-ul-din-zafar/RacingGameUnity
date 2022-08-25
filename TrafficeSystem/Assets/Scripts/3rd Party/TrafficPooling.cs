@@ -19,7 +19,7 @@ public class TrafficPooling : MonoBehaviour {
 	public TrafficType trafficType;
 	private Transform reference;
 
-	public Transform[] lines;
+	public List<Transform> lines;
 	
 	public bool animateNow = true;
 	
@@ -48,6 +48,13 @@ public class TrafficPooling : MonoBehaviour {
 	public float yPos;
     
 	private Stack <int> lastLine;
+       
+	private void Awake () {
+      Utilities.QuickSort <Transform> (0, lines.Count - 1, ref lines, (Transform lhs, Transform rhs)=>{
+		return lhs.position.x < rhs.position.x;
+	  });
+      foreach (var line in  lines) Debug.Log (line.position.x);
+	}   
 
 	void Start () {
 		lastLine = new Stack<int> ();
@@ -113,12 +120,12 @@ public class TrafficPooling : MonoBehaviour {
     void SpawnPowerUps (GameObject powerUp) {
 	   powerUp.SetActive (true);
        
-	   int randomLine = Random.Range (0 , lines.Length);
+	   int randomLine = Random.Range (0 , lines.Count);
        
 	   // don't spawn cars on the same line
 	   if (lastLine.Count > 0) {
           while (randomLine == lastLine.Peek()) {
-			randomLine = Random.Range (0, lines.Length);
+			randomLine = Random.Range (0, lines.Count);
 		  }
 		  lastLine.Pop();
 	   }
@@ -126,7 +133,7 @@ public class TrafficPooling : MonoBehaviour {
 	   lastLine.Push (randomLine);
 	   if (randomLinesHistory.Count > 0) {
 		while (randomLinesHistory.Peek () == randomLine) {
-			randomLine = Random.Range (0 , lines.Length);
+			randomLine = Random.Range (0 , lines.Count);
 		}
 		randomLinesHistory.Pop();
 	   }
@@ -141,7 +148,7 @@ public class TrafficPooling : MonoBehaviour {
 			realignableObject.gameObject.SetActive(true);
 
 		// don't spawn in same line         
-		int randomLine = Random.Range(0, lines.Length );
+		int randomLine = Random.Range(0, lines.Count );
 
 		realignableObject.currentLine = randomLine;
 		realignableObject.transform.position = new Vector3(lines[randomLine].position.x, yPos, (reference.transform.position.z + (Random.Range(100, 300))));
@@ -196,13 +203,8 @@ public class TrafficPooling : MonoBehaviour {
 	
 	/* Helper Functions */
 	private static bool ContainBounds(Transform t, Bounds bounds, Bounds target){
-
-		if(bounds.Contains(target.ClosestPoint(t.position))){
-			return true;
-		}
-
+		if(bounds.Contains(target.ClosestPoint(t.position))) return true; 
 		return false;
-
 	}
     
     private void SpawnCleaner () {
@@ -226,15 +228,15 @@ public class TrafficPooling : MonoBehaviour {
 	}
     
     /// APIS
-	public bool AnyOf (GameObject objToCompare, System.Func <GameObject, GameObject, bool> compareAction) {
+	public bool AnyOf (Transform objToCompare, System.Func <Transform, Transform, bool> compareAction) {
       foreach (var car in  _trafficCars)
-	    if (compareAction (objToCompare, car.gameObject)) return true;
+	    if (compareAction (objToCompare, car.gameObject.transform)) return true;
 	  return false;
 	}
-
-	public Transform AnyOf (GameObject objToCompare, System.Func <GameObject, GameObject, Transform> compareAction) {
+    
+	public Transform AnyOfTransform (Transform objToCompare, System.Func <Transform, Transform, bool> compareAction) {
       foreach (var car in  _trafficCars)
-	    if (compareAction (objToCompare, car.gameObject)) return car.gameObject.transform;
+	    if (compareAction (objToCompare, car.gameObject.transform)) return car.gameObject.transform;
 	  return null;
 	}
    

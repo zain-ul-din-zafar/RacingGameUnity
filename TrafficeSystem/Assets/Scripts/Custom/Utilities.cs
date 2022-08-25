@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Dependencies: NONE
 namespace RandomsUtilities {
   public static class Utilities {
     
@@ -52,8 +53,7 @@ namespace RandomsUtilities {
         action (); 
       }
     }
-
-
+    
   }
   
 }
