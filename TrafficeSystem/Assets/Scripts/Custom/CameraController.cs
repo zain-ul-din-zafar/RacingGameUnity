@@ -39,15 +39,12 @@ public class CameraController : MonoBehaviour {
     // Camera Follow
     private void LateUpdate()  {
         bool isNitroPlaying = playerInstance.isNitroEffectPlaying;
-        
-        
-        
         if (isNitroPlaying) { 
             pauseActionHandler.canInvokeAction = true;
             _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfViewOnBoost, 5 * Time.deltaTime);
             playActionHandler.PlayOneShot (()=> {
                 ToggleParticles ();
-                transform.DOShakePosition (playerInstance.BoostTime(), 0.2f, 10, 180, false, false);
+                transform.DOShakePosition (playerInstance.BoostTime(), 0.3f, 10, 180, false, false);
             });
             playActionHandler.canInvokeAction = false; 
         } else {

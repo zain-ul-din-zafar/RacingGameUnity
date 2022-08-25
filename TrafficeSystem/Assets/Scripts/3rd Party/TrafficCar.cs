@@ -300,7 +300,7 @@ public class TrafficCar : MonoBehaviour {
 
 			case ChangingLines.Right:
 				
-				if(currentLine == (TrafficPooling.lines.Length - 1)){
+				if(currentLine == (TrafficPooling.lines.Count - 1)){
 					changingLines = ChangingLines.Straight;
 					break;
 				}
