@@ -11,15 +11,18 @@ public class CameraController : MonoBehaviour {
     public static CameraController Instance {get; private set;}
     [SerializeField] private float cameraOffSet = 10f;
     [SerializeField] private float cameraFieldOfViewOnBoost = 65f;
-
+    [SerializeField] private float cameraPosOnFly = 12f;
 
     [Space (10)][Header ("Camera Effect")]
     [Tooltip ("Optional Field")][SerializeField]private GameObject warp;
+    
+    
     private Camera _camera;
     private Transform target;
     private PlayerController playerInstance;
-    internal float cameraFieldOfView;
-    
+    private float cameraFieldOfView;
+    private float lastY;
+
     private Utilities.ActionHandler playActionHandler, pauseActionHandler;
     private void Awake () {
         if (Instance) Destroy (this); 
@@ -34,11 +37,25 @@ public class CameraController : MonoBehaviour {
         _camera = GetComponent <Camera> ();
         cameraFieldOfView = _camera.fieldOfView;
         ToggleParticles (false);
+        playerInstance.OnFly += (sender, duration) => {
+            transform.DOMoveY(cameraPosOnFly, duration + 0.3f);
+        };
+        lastY = transform.position.y;
     }
     
     // Camera Follow
-    private void LateUpdate()  {
+    private void LateUpdate() {
+
+        if (Input.GetKeyDown(KeyCode.S)) {
+            transform.DOMoveY(lastY, 4f);
+        }
+        
         bool isNitroPlaying = playerInstance.isNitroEffectPlaying;
+        
+      
+        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x,
+                transform.position.y, target.position.z - cameraOffSet);
+        
         if (isNitroPlaying) { 
             pauseActionHandler.canInvokeAction = true;
             _camera.fieldOfView = Mathf.Lerp (_camera.fieldOfView, cameraFieldOfViewOnBoost, 5 * Time.deltaTime);
@@ -55,14 +72,13 @@ public class CameraController : MonoBehaviour {
             });
             pauseActionHandler.canInvokeAction = false;
         }
-        
-        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x, _camera.transform.position.y, target.position.z - cameraOffSet);
     }
     
     private void ToggleParticles (bool state = true) {
         if (!warp) return; 
         warp.SetActive (state);
     }
+    
     
     // if (isNitroEffectPlaying) 
         // {

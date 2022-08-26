@@ -154,6 +154,7 @@ public class PlayerController : MonoBehaviour {
         AddTouchDelay();
         MagnetEffect();
         ShieldEffect();
+        FlyEffect();
         
         if (Input.GetKey(KeyCode.LeftShift) || useBoost) NitroEffect();
         if (Input.GetKeyUp(KeyCode.LeftShift)) {
@@ -544,4 +545,32 @@ public class PlayerController : MonoBehaviour {
     private void RevertPlayerLayer(string layerMaskName) {
         gameObject.layer = LayerMask.NameToLayer(layerMaskName);
     }
+
+    #region FlyEffect
+
+    public event EventHandler <float> OnFly;
+    
+    [SerializeField] private Vector3 _goalPos;
+    [SerializeField] private Vector3 goalRotation;
+    [SerializeField] private float _flyspeed = 0.5f;
+    [SerializeField] private Vector3 normalRotation;
+    private float _current , _target;
+    
+    private void FlyEffect() {
+        if (Input.GetKeyDown(KeyCode.A)) {
+            transform.DORotate (new Vector3 (0,0 , 360), 1f , RotateMode.LocalAxisAdd).SetEase (Ease.InOutSine);
+            // transform.DOMoveZ(transform.position.z + 10f, 2f).SetEase(Ease.InFlash);
+            transform.DOMoveY (transform.position.y + jumpHeight + 5f, 2f).SetEase (Ease.InFlash);
+            OnFly?.Invoke(this, 2f);
+            gravity = 0;
+            speed += 30f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.S)) {
+            transform.DOMoveY (transform.position.y - jumpHeight - 5f, 3f).SetEase (Ease.InFlash);
+            speed -= 30f;
+        }
+    }
+    #endregion
+    
 }
