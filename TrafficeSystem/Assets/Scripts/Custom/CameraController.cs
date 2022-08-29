@@ -5,7 +5,7 @@ using RandomsUtilities;
 using DG.Tweening;
 
 
-[RequireComponent(typeof (Camera))]
+
 public class CameraController : MonoBehaviour {
     
     public static CameraController Instance {get; private set;}
@@ -34,11 +34,12 @@ public class CameraController : MonoBehaviour {
     private void Start () {
         playerInstance = PlayerController.Instance;
         target = playerInstance.gameObject.transform;
-        _camera = GetComponent <Camera> ();
+        _camera = GetComponentInChildren <Camera> ();
         cameraFieldOfView = _camera.fieldOfView;
         ToggleParticles (false);
-        playerInstance.OnFly += (sender, duration) => {
-            transform.DOMoveY(cameraPosOnFly, duration + 0.3f);
+        playerInstance.OnFly += (duration, isFlying) => {
+            if (isFlying) { _camera.transform.DOMoveY(cameraPosOnFly, duration + 0.3f); }
+            else { _camera.transform.DOMoveY(lastY, 2f); }
         };
         lastY = transform.position.y;
     }
@@ -46,14 +47,10 @@ public class CameraController : MonoBehaviour {
     // Camera Follow
     private void LateUpdate() {
 
-        if (Input.GetKeyDown(KeyCode.S)) {
-            transform.DOMoveY(lastY, 4f);
-        }
-        
         bool isNitroPlaying = playerInstance.isNitroEffectPlaying;
         
-      
-        _camera.gameObject.transform.position = new Vector3(_camera.transform.position.x,
+        
+        transform.position = new Vector3(_camera.transform.position.x,
                 transform.position.y, target.position.z - cameraOffSet);
         
         if (isNitroPlaying) { 

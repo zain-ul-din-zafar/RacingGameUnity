@@ -80,9 +80,13 @@ public class PlayerController : MonoBehaviour {
         magnetTurnOffAction = new Utilities.ActionHandler();
         sheildTurnOffAction = new Utilities.ActionHandler();
         _slideTime = boostTime;
+        _gravity = gravity;
         transform.position = new Vector3(lines[currentIdx].x, transform.position.y, transform.position.z);
         _animator = GetComponentInChildren<Animator>();
         playerEnergy = 100;
+        _flyTime = flyTime;
+        flyTime = 0;
+        flyTurnOffAction = new Utilities.ActionHandler();
     }
 
     private IEnumerator Start() {
@@ -100,7 +104,7 @@ public class PlayerController : MonoBehaviour {
         
         speed = Mathf.Clamp(speed, 0f, maxSpeed);
         bool isGrounded = IsGrounded();
-
+        
         if (slideTime > 0) {
             if (isNitroEffectPlaying && isGrounded) {
                 _animator.SetBool("Boost", true);
@@ -138,7 +142,8 @@ public class PlayerController : MonoBehaviour {
             vVelocity = 0;
             if (Input.GetKeyDown(KeyCode.Space)) Jump();
         }
-        else isJumping = true;
+        else 
+            isJumping = true;
 
         if (isJumping) {
             _animator.SetBool("Jump", true);
@@ -147,8 +152,18 @@ public class PlayerController : MonoBehaviour {
             _animator.SetBool("Boost", false);
         }
 
+        if (_isFlying) {
+            _animator.SetBool("isFlying",_isFlying);
+            _animator.SetBool("Jump", false);
+            _animator.SetBool("Idle", false);
+            _animator.SetBool("IsCollide", false);
+            _animator.SetBool("Boost", false);
+        }
+        else {
+            _animator.SetBool("isFlying",false);
+        }
         // if (Input.GetKeyDown(KeyCode.DownArrow)) MoveDown();
-
+       
         GetTouchInput();
         SmoothlyLerpSpeed();
         AddTouchDelay();
@@ -185,11 +200,13 @@ public class PlayerController : MonoBehaviour {
             _touchDelayTime = touchDelayTime;
             // _animator.SetFloat("Direction" , -1);
             _animator.SetBool("Idle", false);
+            
             transform.DOMoveX(lines[currentIdx].x, lerpDuration).SetEase(Ease.Linear).OnComplete(() => {
                 if (isNitroEffectPlaying || isJumping) return;
                 // _animator.SetBool("Idle" , true);
             });
             // rotate in y direction
+            if (!_isFlying)
             meshTransform.DORotate(new Vector3(0, -45, 0), lerpDuration).OnComplete(() => {
                 meshTransform.DORotate(new Vector3(0, 0, 0), lerpDuration);
             });
@@ -202,11 +219,12 @@ public class PlayerController : MonoBehaviour {
             _touchDelayTime = touchDelayTime;
             // _animator.SetFloat("Direction" , 1);
             _animator.SetBool("Idle", false);
+            
             transform.DOMoveX(lines[currentIdx].x, lerpDuration).SetEase(Ease.Linear).OnComplete(() => {
                 // _animator.SetBool("Idle" , true);
             });
             // rotate in y direction
-            meshTransform.DORotate(new Vector3(0, 55, 0), lerpDuration).OnComplete(() => {
+            if (!_isFlying) meshTransform.DORotate(new Vector3(0, 55, 0), lerpDuration).OnComplete(() => {
                 meshTransform.DORotate(new Vector3(0, 0, 0), lerpDuration);
             });
         }
@@ -346,6 +364,8 @@ public class PlayerController : MonoBehaviour {
     } // <- Swipe control
 
     private void OnCollisionEnter(Collision other) {
+        return;
+        if (_isFlying) return;
         if (other.gameObject.tag == "TrafficCar") {
             if (useBoost)
                 DestroyCarOnCollision(other);
@@ -358,6 +378,7 @@ public class PlayerController : MonoBehaviour {
     private int coins = 0;
 
     private void OnTriggerEnter(Collider other) {
+        return;
         if (other.gameObject.tag == "Coin") {
             coins += 1;
             GameManager.Instance.gameState.coins += 1;
@@ -412,6 +433,10 @@ public class PlayerController : MonoBehaviour {
             shieldTime = _shieldTime;
             RevertPlayerLayer(shieldLayerMask);
         }
+        else if (other.gameObject.tag == "Fly") {
+            flyTime = _flyTime;
+            if (!_isFlying) DoFly();
+        }
     }
     
     // Helper Functions
@@ -442,7 +467,6 @@ public class PlayerController : MonoBehaviour {
                 });
 
             if (nextCar) {
-                Debug.Log(nextCar.name);
                 maxForce = nextCar.position.z - otherTransform.position.z;
                 maxForce -= UnityEngine.Random.Range(3, 5);
             }
@@ -457,10 +481,10 @@ public class PlayerController : MonoBehaviour {
                 transform.position,
                 transform
             );
-
+            
             // change random line
             int lOrR = UnityEngine.Random.Range(0, 2);
-
+            
             if (lOrR == 0) {
                 if (CanMoveLeft())
                     MoveLeft();
@@ -516,7 +540,7 @@ public class PlayerController : MonoBehaviour {
             });
             magnetTurnOffAction.canInvokeAction = false;
         }
-
+        
         TrafficPooling.Instance.IfAnyOfpowerUps(transform, (Transform player, Transform powerUp) => {
             float megnetFieldRange = player.position.z + 25f;
             float powerUpPosZ = powerUp.position.z;
@@ -548,28 +572,43 @@ public class PlayerController : MonoBehaviour {
 
     #region FlyEffect
 
-    public event EventHandler <float> OnFly;
-    
-    [SerializeField] private Vector3 _goalPos;
-    [SerializeField] private Vector3 goalRotation;
-    [SerializeField] private float _flyspeed = 0.5f;
-    [SerializeField] private Vector3 normalRotation;
-    private float _current , _target;
+    public event Action <float,bool> OnFly;
+    private float _gravity;
+    private bool _isFlying ;
+    [SerializeField] private float flyTime = 10f;
+    private float _flyTime;
+    private Utilities.ActionHandler flyTurnOffAction;
     
     private void FlyEffect() {
-        if (Input.GetKeyDown(KeyCode.A)) {
-            transform.DORotate (new Vector3 (0,0 , 360), 1f , RotateMode.LocalAxisAdd).SetEase (Ease.InOutSine);
-            // transform.DOMoveZ(transform.position.z + 10f, 2f).SetEase(Ease.InFlash);
-            transform.DOMoveY (transform.position.y + jumpHeight + 5f, 2f).SetEase (Ease.InFlash);
-            OnFly?.Invoke(this, 2f);
-            gravity = 0;
-            speed += 30f;
-        }
+        if (flyTime <= 0) return;
 
-        if (Input.GetKeyDown(KeyCode.S)) {
-            transform.DOMoveY (transform.position.y - jumpHeight - 5f, 3f).SetEase (Ease.InFlash);
-            speed -= 30f;
+        flyTime -= Time.deltaTime;
+        if (flyTime < 1) {
+            flyTurnOffAction.PlayOneShot(DontFly);
+            flyTurnOffAction.canInvokeAction = false;
         }
+        else {
+            flyTurnOffAction.canInvokeAction = true;
+        }
+    }
+
+    
+    private void DoFly() {
+        _isFlying = true;
+        gravity = 0;
+        speed += 40f;
+        Jump();
+        transform.DOMoveY (transform.position.y + jumpHeight + 5f, 2f).SetEase (Ease.InFlash);
+        transform.DORotate (new Vector3 (0,0 , 360), 1f , RotateMode.LocalAxisAdd).SetEase (Ease.InOutSine);
+        OnFly?.Invoke(2f,_isFlying);
+    }
+
+    private void DontFly() {
+        gravity = _gravity;
+        _isFlying = false;
+        OnFly?.Invoke(2f,_isFlying);
+        transform.DOMoveY(transform.position.y - jumpHeight - 5f, 1f).SetEase(Ease.InFlash);
+        speed -= 40f;
     }
     #endregion
     

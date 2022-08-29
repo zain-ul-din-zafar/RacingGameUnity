@@ -16,7 +16,8 @@ public class ParticleSpawnManager : MonoBehaviour {
        particlesDictionary[particleType].GetComponent <ParticleSystem>().Play();
     } 
     
-    public void DiableParticle (ParticleType particleType) => particlesDictionary [particleType].GetComponent <ParticleSystem>().Stop();
+    public void DiableParticle (ParticleType particleType) => 
+        particlesDictionary [particleType].GetComponent <ParticleSystem>().Stop();
     
 #region PRIVATE 
     // TODOS : Add Particle Name here

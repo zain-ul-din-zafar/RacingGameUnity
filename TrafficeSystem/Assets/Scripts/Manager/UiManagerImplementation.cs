@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Randoms;
 
 // Scene Manager Implementations
 public partial class UiManager : MonoBehaviour {
@@ -27,7 +28,7 @@ public partial class UiManager : MonoBehaviour {
 
     private void ListenToGamePlaySceneEvents () {
       coinCountUI.text = $"Coins : {GameManager.Instance.gameState.coins}";  
-      PlayerController.Instance.OnHitCoin += (System.Object sender , float coinsValue) => 
+      RandomsPlayerController.Instance.OnHitCoin += (System.Object sender , float coinsValue) => 
         coinCountUI.text = $"Coins : {GameManager.Instance.gameState.coins}";  
 
       energyCountUI.text = $"Energy : {100}";
