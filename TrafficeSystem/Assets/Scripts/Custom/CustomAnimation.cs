@@ -16,7 +16,7 @@ public class CustomAnimation : MonoBehaviour {
         switch (animationType) {
             case AnimationType.Rotate:
                 // rotate in y in given duration
-                transform.eulerAngles += new Vector3(0, 360f * Time.deltaTime / duration, 0);
+                transform.localEulerAngles += new Vector3(0, 360f * Time.deltaTime / duration, 0);
                 break;
         }
     }
